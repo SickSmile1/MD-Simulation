@@ -18,3 +18,7 @@ void hello_eigen() {
     // Output matrix values
     std::cout << m << std::endl;
 }
+
+double mysin(double val) {
+    return std::sin(val);
+}
