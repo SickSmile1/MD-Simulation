@@ -9,7 +9,7 @@ int main() {
     double x = 10., y = 1., z = 0.;
     double vx = 0., vy = -1., vz = 0.;
     double fx = 0., fy = 0., fz = 0;
-    double mass = 1.59e-8;
+    double mass = 1.59;
     int nb_steps = 10;
     for (int i = 0; i < nb_steps; ++i) {
         std::cout << "Step: " << i << std::endl;
