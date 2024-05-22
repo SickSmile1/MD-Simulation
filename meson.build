@@ -8,6 +8,7 @@ project(
 
 eigen = dependency('eigen3', version: '>=3.4.0')
 mpi = dependency('mpi', language: 'cpp')
+google_test = dependency('gtest')
 
 subdir('src')
 subdir('milestones')

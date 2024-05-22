@@ -2,7 +2,7 @@
 // Created by ilia on 24/04/24.
 //
 
-#include "iostream"
+/*#include "iostream"
 #include "verlet.h"
 
 int main() {
@@ -18,4 +18,4 @@ int main() {
         verlet_step2(vx, vy, vz, fx, fy, fz, 1., mass);
     }
     return 1;
-}
+}*/

@@ -1,0 +1,7 @@
+{
+  "C_Cpp.default.compileCommands": "/home/sick/Documents/GIT/MD-Simulation/builddir/compile_commands.json",
+  "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild",
+  "files.associations": {
+    "ostream": "cpp"
+  }
+}
