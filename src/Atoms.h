@@ -4,7 +4,7 @@
 
 #ifndef __ATOMS_H
 #define __ATOMS_H
-#include "assert.h"
+#include "cassert"
 #include "Eigen/Dense"
 
 using Positions_t = Eigen::Array3Xd;
@@ -16,16 +16,20 @@ struct Atoms {
     Velocities_t velocities;
     Forces_t forces;
 
-    Atoms(Positions_t &p): positions{p},velocities(3,p.cols()), forces{3, p.cols()} {
+    Atoms(const Positions_t &p): positions{p}, velocities(3, p.cols()), forces{3, p.cols()} {
         velocities.setZero();
         forces.setZero();
     }
      
-    Atoms(const Positions_t &p, const Velocities_t &v) : 
-            positions{p}, velocities{v}, forces{3, p.cols()} { 
+    Atoms(const Positions_t &p, const Velocities_t &v) :
+            positions{p}, velocities{v}, forces{3, p.cols()} {
         assert(p.cols() == v.cols());
-        forces.setZero(); 
-    } 
+        forces.setZero();
+    }
+
+   size_t nb_atoms() const {
+        return positions.cols();
+    }
 };
 
 #endif // __ATOMS_H

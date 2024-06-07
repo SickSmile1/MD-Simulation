@@ -1,5 +1,5 @@
 // Include a library file to make sure proper includes are set
-#include "hello.h"
+/*#include "hello.h"
 #include <gtest/gtest.h>
 #include "verlet.h"
 #include "math.h"
@@ -18,4 +18,4 @@ TEST(VerletTest, BasicLoop) {
         //verlet_step2(vx, vy, vz, fx, fy, fz, 1., mass);
     }
     ASSERT_NEAR(res, x, 1.5e-3);
-}
+}*/

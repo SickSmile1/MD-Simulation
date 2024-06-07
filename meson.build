@@ -9,6 +9,7 @@ project(
 eigen = dependency('eigen3', version: '>=3.4.0')
 mpi = dependency('mpi', language: 'cpp')
 google_test = dependency('gtest')
+#gtest_main = google_test.get_variable('gtest_main_dep')
 
 subdir('src')
 subdir('milestones')

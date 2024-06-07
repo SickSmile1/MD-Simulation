@@ -9,19 +9,19 @@
 
 // quickref eigen: https://www.quantstart.com/articles/Eigen-Library-for-Matrix-Algebra-in-C/
 int main() {
-    Eigen::Array3Xd p(3, 10);
+    Eigen::Array3Xd p{ 3,10};
     // p.setZero();
     p.col(0) << 10. , 1., 0.;
     Atoms at(p);
-    at.velocities.col(0) << 0.,-1., 0.;
+    at.positions.col(0) << 0.,-1., 0.;
     std::cout << at.positions << std::endl;
     double mass = 1.59;
     int nb_steps = 10;
     for (int i = 0; i < nb_steps; ++i) {
-        std::cout << "Step: " << i << std::endl;
-        verlet_step1(at, 1e-3, mass);
+        // std::cout << "Step: " << i << std::endl;
+        verlet_step1(at.positions, at.velocities, at.forces, 1e-3, mass);
         // ... compute forces here ... //
-        verlet_step2(at, 1e-3, mass);
+        verlet_step2(at.velocities, at.forces, 1e-3);
     }
     return 1;
 }

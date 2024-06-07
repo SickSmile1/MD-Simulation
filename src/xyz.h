@@ -27,8 +27,8 @@
 
 #include <fstream>
 
-#include "atoms.h"
-
+#include "Atoms.h"
+using Names_t = std::vector<std::string>;
 /*
  * Type Names_t, if not defined use
  * using Names_t = std::vector<std::string>;
