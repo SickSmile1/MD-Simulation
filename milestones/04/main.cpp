@@ -3,13 +3,20 @@
 //
 
 #include "Atoms.h"
+#include "verlet.h"
 #include "lj_direct_summation.h"
 #include "xyz.h"
-auto [names, positions, velocities]{read_xyz_with_velocities("lj54.xyz")};
 
 int main() {
+    auto [names, positions, velocities]{read_xyz_with_velocities("lj54.xyz")};
     Atoms atoms(positions, velocities);
-    lj_direct_summation(atoms,1.,1.);
+    for (int i=0;i<101;i++) {
+        lj_direct_summation(atoms,1.,1.);
+        verlet_step1(atoms.positions, atoms.velocities, atoms.forces, .1e-3, 1);
+        verlet_step2(atoms.velocities, atoms.forces, 1e-3);
+    }
+
+
 
     return 1;
 }

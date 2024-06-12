@@ -64,7 +64,7 @@ std::tuple<Names_t, Positions_t> read_xyz(const std::string &filename) {
 
 std::tuple<Names_t, Positions_t, Velocities_t> read_xyz_with_velocities(const std::string &filename) {
     std::ifstream file(filename);
-
+    
     if (file.is_open()) {
         std::string line;
 
