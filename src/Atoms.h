@@ -20,7 +20,10 @@ struct Atoms {
         velocities.setZero();
         forces.setZero();
     }
-     
+    Atoms(const int t): positions{3,t}, velocities(3, t), forces{3, t} {
+
+    }
+
     Atoms(const Positions_t &p, const Velocities_t &v) :
             positions{p}, velocities{v}, forces{3, p.cols()} {
         assert(p.cols() == v.cols());
