@@ -3,6 +3,11 @@ lib_sources = [  # All source files (excluding headers)
     'verlet.cpp',
     'xyz.cpp',
     'lj_direct_summation.cpp',
+    'berendsten.cpp',
+    'cubicLatice.cpp',
+    'neighbors.cpp',
+    'lj.cpp',
+    'ducastelle.cpp',
 ]
 
 lib = static_library(

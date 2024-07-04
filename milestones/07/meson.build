@@ -1,6 +1,5 @@
-subdir('plot')
 executable(
-	'milestone04',
+	'milestone07',
 	'main.cpp',
 	include_directories : [lib_incdirs],
 	link_with : [lib],
@@ -8,4 +7,4 @@ executable(
 )
 
 fs = import('fs')
-fs.copyfile('lj54.xyz')
+fs.copyfile('cluster_923.xyz')
