@@ -60,14 +60,16 @@ TEST(DucastelleTest3, temp_to_file) {
         nl.update(at,5.5);
         const double timestep = j; double T = 0;
         const double fixed_mass = 196.96657 / 0.009649;
-        for(int i = 0; i < std::ceil(10000/j); i++) {
+        int runs = 10000/j;
+        int dp = std::ceil(runs/100);
+        for(int i = 0; i < std::ceil(runs); i++) {
             verlet_step1(at.positions, at.velocities, at.forces, timestep, fixed_mass);
             nl.update(at,5.5);
             at.forces.setZero();
             double epot = ducastelle(at, nl);
             verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
             if (i < 2000) { berendsen_thermostat(at, 750, timestep, 1000, fixed_mass); }
-            if(i> 150 && i%10==0) {
+            if(i> 150 && i%dp==0) {
                 ekin = fixed_mass*(at.velocities.colwise().squaredNorm()*0.5).sum();
                 T = ( ekin / (1.5 * at.positions.cols() * kB) );
                 myfile << T << "\t";

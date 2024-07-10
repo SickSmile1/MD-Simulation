@@ -32,7 +32,7 @@ static void lj_cubes(benchmark::State& state) {
 
 BENCHMARK(lj_cubes)
 ->ArgsProduct({
-benchmark::CreateDenseRange(2, 8, /*step=*/1) // This creates a DenseRange from 1 to 8
+benchmark::CreateDenseRange(2, 20, /*step=*/1) // This creates a DenseRange from 1 to 8
 })->Complexity(benchmark::oNSquared)->Unit(benchmark::kMillisecond);
 
 static void lj_cubes_cutoff(benchmark::State& state) {
@@ -57,8 +57,8 @@ static void lj_cubes_cutoff(benchmark::State& state) {
 
 BENCHMARK(lj_cubes_cutoff)
     ->ArgsProduct({
-    benchmark::CreateDenseRange(2, 8, /*step=*/1) // This creates a DenseRange from 1 to 8
-})->Complexity(benchmark::oNSquared)->Unit(benchmark::kMillisecond);
+    benchmark::CreateDenseRange(2, 20, /*step=*/1) // This creates a DenseRange from 1 to 8
+})->Complexity(benchmark::oN)->Unit(benchmark::kMillisecond);
 
 // MY_BENCHMARK(lj_cubes);
 

@@ -6,6 +6,8 @@ executable(
   'gemv_benchmarks.cpp',
   dependencies : [eigen, benchmark]
 )
+fs = import('fs')
+fs.copyfile('plot_benchmark.py')
 
 executable(
   'bench2',

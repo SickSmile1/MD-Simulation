@@ -8,12 +8,9 @@
 
 double lj_direct_summation(Atoms &atoms,const NeighborList neighbors, const double epsilon = 1.0,
                            const double sigma = 1.0, const double cutoff = 1.0, double mass = 1.) {
-    // Eigen::RowVector2d d_vec(atoms.nb_atoms());
     double e_pot_all = 0., e_pot = 0., r_norm = 0., pauli = 0., london = 0., force = 0.;
     Eigen::Vector3d d_vec;
     atoms.forces.setZero();
-    //for(std::size_t i = 1; i < atoms.positions.cols(); i++){
-    //    for(std::size_t j = 0; j < i; j++) {
     for (auto[i,j]: neighbors){
         if(i<j) {
             d_vec = atoms.positions.col(i) - atoms.positions.col(j);
