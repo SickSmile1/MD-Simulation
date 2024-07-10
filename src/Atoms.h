@@ -18,6 +18,7 @@ struct Atoms {
     Velocities_t velocities;
     Forces_t forces;
     Masses masses;
+    Eigen::ArrayXd energies;
 
     Atoms(const Positions_t &p): positions{p}, velocities(3, p.cols()), forces{3, p.cols()},
             masses{3, p.cols()}{
@@ -48,6 +49,7 @@ struct Atoms {
     }
 
     void set_masses (const double m) {
+        masses.setOnes();
         masses *= m;
     }
 
@@ -77,6 +79,10 @@ struct Atoms {
 
     int nb_atoms() const {
         return positions.cols();
+    }
+
+    void init_energies(int num) {
+        Eigen::ArrayXd energies{num};
     }
 };
 
