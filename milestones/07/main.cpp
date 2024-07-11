@@ -24,7 +24,7 @@ double ramp_up(Atoms &at, const double timestep, double &T, const double fixed_m
         at.forces.setZero();
         epot = ducastelle(at, nl);
         verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
-        if (i < 1000) { berendsen_thermostat(at, 650, timestep, 400, fixed_mass); }
+        if (i < 1000) {berendsen_thermostat(at, 650, timestep, 400, fixed_mass); }
         if(i%10==0) {
             write_xyz(traj, at);
             // std::cout << "Temp is: " << T << ", energy: " << ekin+epot << std::endl;
@@ -66,7 +66,7 @@ void melt(Atoms &at, const double timestep, double &T, const double fixed_mass,
         verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
         if(i%1000==0) {
             write_xyz(traj, at);
-            T = at.get_temp(fixed_mass,at.velocities,at.positions);
+            T = at.get_temp(fixed_mass,at.velocities);
             double ekin = at.get_ekin(fixed_mass,at.velocities);
             ta.push_back(ekin+epot);
             if (equi_energy(ta)) at.velocities *= std::sqrt(1+(20/T));

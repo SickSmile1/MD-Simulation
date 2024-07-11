@@ -21,7 +21,6 @@ TEST(VerletTest, VerletAtomClass) {
     for (int i = 0; i < nb_steps; ++i) {
         // std::cout << "Step: " << i << std::endl;
         verlet_step1(at.positions, at.velocities, at.forces, 1e-3,mass);
-        // ... compute forces here ... //
         verlet_step2(at.velocities, at.forces, 1e-3);// 2e-9
     }
     ASSERT_NEAR(res, at.positions.col(0)[0], 1.5e-3);

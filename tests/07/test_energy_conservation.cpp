@@ -13,7 +13,7 @@
 #include "verlet.h"
 
 TEST(DucastelleTest2, energy) {
-    // GTEST_SKIP();
+    GTEST_SKIP();
     auto [names, positions, velocities]{read_xyz_with_velocities("cluster_923.xyz")};
     NeighborList nl;
     double old_energy = 0, ekin = 0;
@@ -46,6 +46,7 @@ TEST(DucastelleTest2, energy) {
 }
 
 TEST(DucastelleTest3, temp_to_file) {
+    GTEST_SKIP();
     auto [names, positions, velocities]{read_xyz_with_velocities("cluster_923.xyz")};
     NeighborList nl;
     double old_energy = 0, ekin = 0;

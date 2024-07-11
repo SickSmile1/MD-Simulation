@@ -7,7 +7,8 @@
 #include "Eigen/Dense"
 
 double lj_direct_summation(Atoms &atoms,const NeighborList neighbors, const double epsilon = 1.0,
-                           const double sigma = 1.0, const double cutoff = 1.0, double mass = 1.) {
+                           const double sigma = 1.0, const double cutoff = 1.0, double mass = 1.,
+                           const double c_energy = 0.) {
     double e_pot_all = 0., e_pot = 0., r_norm = 0., pauli = 0., london = 0., force = 0.;
     Eigen::Vector3d d_vec;
     atoms.forces.setZero();
@@ -18,7 +19,7 @@ double lj_direct_summation(Atoms &atoms,const NeighborList neighbors, const doub
             if(r_norm <= cutoff) {
                 london = std::pow((sigma / r_norm), 6);
                 pauli = std::pow(london, 2);
-                e_pot = 4 * epsilon * (pauli - london);
+                e_pot = 4 * epsilon * (pauli - london) - c_energy;
                 force = (24 * epsilon) / r_norm * (2 * pauli - london);
                 atoms.forces.col(i).array() += force * (d_vec.array() / r_norm);
                 atoms.forces.col(j).array() -= force * (d_vec.array() / r_norm);

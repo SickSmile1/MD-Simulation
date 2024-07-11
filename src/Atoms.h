@@ -68,12 +68,14 @@ struct Atoms {
         return (4 * epsilon * (pauli - london));
     }
 
-    double get_temp (const double mass, const Velocities_t &v, const Positions_t &p) {
+    double get_temp (const double mass, const Velocities_t &v) {
         return ( mass * (v.colwise().squaredNorm()*0.5).sum()/
-                (1.5 * p.cols() * kB) );
+                (1.5 * v.cols() * kB) );
     }
 
-    double get_ekin (const double mass, const Velocities_t &v) {
+    double get_ekin (const double mass, Velocities_t &v, int local = 0) {
+        if (local == 0) { local = v.cols();}
+        // auto temp_v = v.block(3,0,3,local);
         return mass * (v.colwise().squaredNorm()*0.5).sum();
     }
 
@@ -82,7 +84,7 @@ struct Atoms {
     }
 
     void init_energies(int num) {
-        Eigen::ArrayXd energies{num};
+        energies.conservativeResize(num);
     }
 };
 

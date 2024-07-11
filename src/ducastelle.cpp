@@ -36,7 +36,7 @@
  */
 double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
                   double cutoff, double A, double xi, double p, double q,
-                  double re, int local = 0) {
+                  double re, int local) {
     auto cutoff_sq{cutoff * cutoff};
     double xi_sq{xi * xi};
     if(local == 0) local = atoms.nb_atoms();
@@ -67,9 +67,8 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
     embedding = -embedding.sqrt();
 
     // per-atom energies
-    // Eigen::ArrayXd energies{embedding};
-    atoms.init_energies(embedding.size());
-
+    Eigen::ArrayXd energies{embedding};
+    // nergies(embedding.size());
     // compute forces
     for (auto [i, j] : neighbor_list) {
         if (i < j) {
@@ -106,8 +105,10 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
 
                 // sum per-atom energies
                 repulsive_energy *= 0.5;
-                atoms.energies(i) += repulsive_energy;
-                atoms.energies(j) += repulsive_energy;
+                /*atoms.energies(i) += repulsive_energy;
+                atoms.energies(j) += repulsive_energy;*/
+                energies(i) += repulsive_energy;
+                energies(j) += repulsive_energy;
 
                 // sum per-atom forces
                 atoms.forces.col(i) -= pair_force;
@@ -117,5 +118,5 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
     }
 
     // Return total potential energy
-    return atoms.energies(Eigen::seqN(0,local)).sum();
+    return energies(Eigen::seqN(0,local)).sum();
 }

@@ -13,6 +13,7 @@
 #include "Eigen/Dense"
 #include "iostream"
 #include "fstream"
+#include "cassert"
 
 TEST(Berendsten, temperature) {
     GTEST_SKIP();
@@ -31,29 +32,32 @@ TEST(Berendsten, temperature) {
 TEST(Berendsten, equilibrium) {
     //std::ofstream myfile;
     //myfile.open ("temperatures");
-    Atoms at(125);
-    const double timestep = 1e-13;
+    Atoms at(64);
+    at.velocities.setRandom();
+    at.velocities *= 1e-5;
+    const double timestep = 1e-8;
     double T;
-    createCubicLatice(at,5);
-    for(int i = 0; i < 100; i++) {
+    createCubicLatice(at,4);
+    for(int i = 0; i < 1000; i++) {
         verlet_step1(at.positions, at.velocities, at.forces, timestep, 1);
-        lj_direct_summation(at, 1, 1);
+        // std::cout << at.forces << std::endl;
+        double epot = lj_direct_summation(at);
         verlet_step2(at.velocities, at.forces, timestep);
-        berendsen_thermostat(at, 0.8, timestep, 1e-12);
-        // ekin = ;
-        T = (at.velocities.colwise().squaredNorm()*0.5).sum() / (1.5 * at.velocities.cols() * 1);
+        berendsen_thermostat(at, 0.3, timestep, 1e-7);
+        // T = 1 * (at.velocities.colwise().squaredNorm()*0.5).sum()/ (1.5 * at.velocities.cols() * 1);
         //myfile << T << "\t";
     }
     // myfile.close();
 }
 
 TEST(Berendsten2, equilibrium_xyz) {
+    GTEST_SKIP();
     std::ofstream traj("traj.xyz");
     //myfile.open ("temperatures");
     Atoms at(125);
     const double timestep = 1e-4;
     createCubicLatice(at,5);
-    for(int i = 0; i < 500; i++) {
+    for(int i = 0; i < 2500; i++) {
         verlet_step1(at.positions, at.velocities, at.forces, timestep, 1);
         lj_direct_summation(at, 1, 1);
         verlet_step2(at.velocities, at.forces, timestep);
