@@ -11,6 +11,7 @@ using Positions_t = Eigen::Array3Xd;
 using Velocities_t = Eigen::Array3Xd;
 using Forces_t = Eigen::Array3Xd;
 using Masses = Eigen::Array3Xd;
+using Stresses = Eigen::Array3Xd;
 const double kB = 8.61733e-5;
 
 struct Atoms {
@@ -18,34 +19,40 @@ struct Atoms {
     Velocities_t velocities;
     Forces_t forces;
     Masses masses;
+    Stresses stresses;
     Eigen::ArrayXd energies;
 
     Atoms(const Positions_t &p): positions{p}, velocities(3, p.cols()), forces{3, p.cols()},
-            masses{3, p.cols()}{
+            masses{3, p.cols()}, stresses{3,p.cols()} {
         masses.setOnes();
         velocities.setZero();
         forces.setZero();
+        stresses.setZero();
     }
 
     Atoms(const std::vector<std::basic_string<char>> names, const Positions_t &p): positions{p}, velocities(3, p.cols()),
-            forces{3, p.cols()}, masses{3, p.cols()} {
+            forces{3, p.cols()}, masses{3, p.cols()}, stresses{3,p.cols()}{
         masses.setOnes();
         velocities.setZero();
         forces.setZero();
+        stresses.setZero();
     }
 
     Atoms(const int t): positions{3,t}, velocities(3, t), forces{3, t},
-            masses{3, t}{
+            masses{3, t}, stresses{3,t}{
         masses.setOnes();
         velocities.setZero();
         forces.setZero();
+        stresses.setZero();
     }
 
     Atoms(const Positions_t &p, const Velocities_t &v) :
-            positions{p}, velocities{v}, forces{3, p.cols()}, masses{3, p.cols()} {
+            positions{p}, velocities{v}, forces{3, p.cols()},
+            masses{3, p.cols()}, stresses{3,p.cols()} {
         assert(p.cols() == v.cols());
         masses.setOnes();
         forces.setZero();
+        stresses.setZero();
     }
 
     void set_masses (const double m) {
@@ -58,6 +65,7 @@ struct Atoms {
         velocities.conservativeResize(3, local);
         forces.conservativeResize(3, local);
         masses.conservativeResize(3, local);
+        stresses.conservativeResize(3, local);
     }
 
     double e_shift(Eigen::Vector3d at1, Eigen::Vector3d at2, double sigma, double epsilon) const {
@@ -73,10 +81,13 @@ struct Atoms {
                 (1.5 * v.cols() * kB) );
     }
 
-    double get_ekin (const double mass, Velocities_t &v, int local = 0) {
-        if (local == 0) { local = v.cols();}
-        // auto temp_v = v.block(3,0,3,local);
+    double get_ekin (const double mass, Velocities_t &v) {
         return mass * (v.colwise().squaredNorm()*0.5).sum();
+    }
+
+    double get_ekin (const double mass, Velocities_t &v,size_t N_local) {
+        auto ekin = mass * (v.colwise().squaredNorm().array()*0.5);
+        return ekin(Eigen::seqN(0,N_local)).sum();
     }
 
     int nb_atoms() const {

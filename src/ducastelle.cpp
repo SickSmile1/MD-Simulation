@@ -34,16 +34,16 @@
  * and alloys", Phys. Rev. B 48, 22 (1993) The default values for the parameters
  * are the Au parameters from Cleri & Rosato's paper.
  */
-double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int local, double vol,
                   double cutoff, double A, double xi, double p, double q,
-                  double re, int local) {
+                  double re) {
     auto cutoff_sq{cutoff * cutoff};
     double xi_sq{xi * xi};
     if(local == 0) local = atoms.nb_atoms();
     // Reset energies and forces. This needs to be turned off if multiple
     // potentials are present.
     atoms.forces.setZero();
-
+    if (local != 0) local = atoms.nb_atoms();
     // compute embedding energies
     Eigen::ArrayXd embedding(
             atoms.nb_atoms()); // contains first density, later energy
@@ -68,10 +68,13 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
 
     // per-atom energies
     Eigen::ArrayXd energies{embedding};
+    atoms.energies.setZero();
+    double half = 1;
     // nergies(embedding.size());
     // compute forces
     for (auto [i, j] : neighbor_list) {
         if (i < j) {
+            half = 1;
             double d_embedding_density_i{0};
             // this is the derivative of sqrt(embedding)
             if (embedding(i) != 0)
@@ -102,21 +105,25 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
                         (d_repulsive_energy +
                          fac * (d_embedding_density_i + d_embedding_density_j)) *
                         distance_vector.normalized()};
+                if(j>local) half = .5;
+                else if (i>local && j > local) half = 0;
 
+                atoms.stresses.col(i) += 1/2. * vol * half * pair_force * distance_vector.array();
+                atoms.stresses.col(j) += 1/2. * vol * half * pair_force * distance_vector.array();
                 // sum per-atom energies
                 repulsive_energy *= 0.5;
                 /*atoms.energies(i) += repulsive_energy;
                 atoms.energies(j) += repulsive_energy;*/
                 energies(i) += repulsive_energy;
                 energies(j) += repulsive_energy;
-
                 // sum per-atom forces
                 atoms.forces.col(i) -= pair_force;
                 atoms.forces.col(j) += pair_force;
             }
         }
     }
+    atoms.energies.array() = energies(Eigen::seqN(0,local));
 
     // Return total potential energy
-    return energies(Eigen::seqN(0,local)).sum();
+    return energies.sum();
 }
