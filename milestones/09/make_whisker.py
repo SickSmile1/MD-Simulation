@@ -10,8 +10,8 @@ from ase.lattice.cubic import FaceCenteredCubic
 # radius = 15
 # size = [14, 10, 50]  # 6590 atoms
 
-radius = 15
-size = [14, 10, 100]
+radius = 12
+size = [11, 10, 30]
 
 # radius = 30
 # size = [28, 20, 100]  # 51500 atoms

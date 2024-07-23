@@ -34,16 +34,14 @@
  * and alloys", Phys. Rev. B 48, 22 (1993) The default values for the parameters
  * are the Au parameters from Cleri & Rosato's paper.
  */
-double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int local, double vol,
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
                   double cutoff, double A, double xi, double p, double q,
                   double re) {
     auto cutoff_sq{cutoff * cutoff};
     double xi_sq{xi * xi};
-    if(local == 0) local = atoms.nb_atoms();
     // Reset energies and forces. This needs to be turned off if multiple
     // potentials are present.
     atoms.forces.setZero();
-    if (local != 0) local = atoms.nb_atoms();
     // compute embedding energies
     Eigen::ArrayXd embedding(
             atoms.nb_atoms()); // contains first density, later energy
@@ -68,13 +66,11 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int local, do
 
     // per-atom energies
     Eigen::ArrayXd energies{embedding};
-    atoms.energies.setZero();
-    double half = 1;
-    // nergies(embedding.size());
+
     // compute forces
     for (auto [i, j] : neighbor_list) {
         if (i < j) {
-            half = 1;
+            double half = 1.;
             double d_embedding_density_i{0};
             // this is the derivative of sqrt(embedding)
             if (embedding(i) != 0)
@@ -105,15 +101,9 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int local, do
                         (d_repulsive_energy +
                          fac * (d_embedding_density_i + d_embedding_density_j)) *
                         distance_vector.normalized()};
-                if(j>local) half = .5;
-                else if (i>local && j > local) half = 0;
 
-                atoms.stresses.col(i) += 1/2. * vol * half * pair_force * distance_vector.array();
-                atoms.stresses.col(j) += 1/2. * vol * half * pair_force * distance_vector.array();
                 // sum per-atom energies
                 repulsive_energy *= 0.5;
-                /*atoms.energies(i) += repulsive_energy;
-                atoms.energies(j) += repulsive_energy;*/
                 energies(i) += repulsive_energy;
                 energies(j) += repulsive_energy;
                 // sum per-atom forces
@@ -122,8 +112,95 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int local, do
             }
         }
     }
-    atoms.energies.array() = energies(Eigen::seqN(0,local));
 
     // Return total potential energy
     return energies.sum();
+}
+
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, Domain &dom, double vol,
+                  double cutoff, double A, double xi, double p, double q,
+                  double re) {
+    auto cutoff_sq{cutoff * cutoff};
+    double xi_sq{xi * xi};
+    // Reset energies and forces. This needs to be turned off if multiple
+    // potentials are present.
+    atoms.forces.setZero();
+    // compute embedding energies
+    Eigen::ArrayXd embedding(
+            atoms.nb_atoms()); // contains first density, later energy
+    embedding.setZero();
+    for (auto [i, j] : neighbor_list) {
+        if (i < j) {
+            Eigen::Vector3d distance_vector{atoms.positions.col(i) -
+                                            atoms.positions.col(j)};
+            auto distance_sq = distance_vector.squaredNorm();
+            if (distance_sq < cutoff_sq) {
+                double density_contribution{
+                        xi_sq *
+                        std::exp(-2 * q * (std::sqrt(distance_sq) / re - 1.0))};
+                embedding(i) += density_contribution;
+                embedding(j) += density_contribution;
+            }
+        }
+    }
+
+    // compute embedding contribution to the potential energy
+    embedding = -embedding.sqrt();
+
+    // per-atom energies
+    Eigen::ArrayXd energies{embedding};
+    // nergies(embedding.size());
+    // compute forces
+    for (auto [i, j] : neighbor_list) {
+        if (i < j) {
+            double half = 1.;
+            double d_embedding_density_i{0};
+            // this is the derivative of sqrt(embedding)
+            if (embedding(i) != 0)
+                d_embedding_density_i = 1 / (2 * embedding(i));
+
+            Eigen::Vector3d distance_vector{atoms.positions.col(i) -
+                                            atoms.positions.col(j)};
+            auto distance_sq = distance_vector.squaredNorm();
+            if (distance_sq < cutoff_sq) {
+                double distance{std::sqrt(distance_sq)};
+                double d_embedding_density_j{0};
+                // this is the derivative of sqrt(embedding)
+                if (embedding(j) != 0)
+                    d_embedding_density_j = 1 / (2 * embedding(j));
+
+                // repulsive energy and derivative of it with respect to
+                // distance
+                double repulsive_energy{2 * A *
+                                        std::exp(-p * (distance / re - 1.0))};
+                double d_repulsive_energy{-repulsive_energy * p / re};
+
+                // derivative of embedding energy contributions
+                double fac{-2 * q / re * xi_sq *
+                           std::exp(-2 * q * (distance / re - 1.0))};
+
+                // pair force
+                Eigen::Array3d pair_force{
+                        (d_repulsive_energy +
+                         fac * (d_embedding_density_i + d_embedding_density_j)) *
+                        distance_vector.normalized()};
+                if(j> dom.nb_local()) half = .5;
+                else if (i> dom.nb_local() && j >  dom.nb_local()) half = 0;
+
+                atoms.stresses.col(i) += 1/2. * vol * half * pair_force * distance_vector.array();
+                atoms.stresses.col(j) += 1/2. * vol * half * pair_force * distance_vector.array();
+                // sum per-atom energies
+                repulsive_energy *= 0.5;
+                energies(i) += repulsive_energy;
+                energies(j) += repulsive_energy;
+                // sum per-atom forces
+                atoms.forces.col(i) -= pair_force;
+                atoms.forces.col(j) += pair_force;
+            }
+        }
+    }
+
+    // Return total potential energy
+    // return energies.block(0,0,2, dom.nb_local()-1).sum();
+    return energies(Eigen::seqN(0,dom.nb_local())).sum();
 }

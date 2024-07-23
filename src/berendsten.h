@@ -5,8 +5,12 @@
 #ifndef MD_SIMULATION_BERENDSTEN_H
 #define MD_SIMULATION_BERENDSTEN_H
 #include "Atoms.h"
+#include "domain.h"
 
 void berendsen_thermostat(Atoms &atoms, const double temperature, const double timestep,
+                          const double relaxation_time, const double mass);
+
+void berendsen_thermostat(Atoms &atoms, Domain &domain, const double temperature, const double timestep,
                           const double relaxation_time, const double mass);
 
 void berendsen_thermostat(Atoms &atoms, const double temperature, const double timestep,

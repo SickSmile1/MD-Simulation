@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 
     double ekin_total{MPI::allreduce(at.get_ekin(m, at.velocities, domain.nb_local()), MPI_SUM, MPI_COMM_WORLD)};
     double ekin1 = at.get_ekin(m, at.velocities, domain.nb_local());
-    size_t n_atoms{MPI::allreduce(domain.nb_local(), MPI_SUM, MPI_COMM_WORLD)};
+    int n_atoms{MPI::allreduce(domain.nb_local(), MPI_SUM, MPI_COMM_WORLD)};
     std::cout << at.nb_atoms() << " domain atoms: " << domain.nb_local() << std::endl;
     if (rank ==0) {
         // std::cout << "globpot" << global_pot << "reduce: " << global_pot+ekin << std::endl;

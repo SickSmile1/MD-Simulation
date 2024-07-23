@@ -36,7 +36,11 @@
  *     Cleri, Rosato, "Tight-binding potentials for transition metals and alloys", Phys. Rev. B 48, 22 (1993)
  * The default values for the parameters are the Au parameters from Cleri & Rosato's paper.
  */
-double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, int local = 0, double volume= 0,
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
+                  double cutoff = 10.0, double A = 0.2061,
+                  double xi = 1.790, double p = 10.229, double q = 4.036, double re = 4.079 / sqrt(2));
+
+double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, Domain &dom, double vol= 0,
                   double cutoff = 10.0, double A = 0.2061,
                   double xi = 1.790, double p = 10.229, double q = 4.036, double re = 4.079 / sqrt(2));
 
