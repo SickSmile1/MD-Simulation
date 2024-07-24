@@ -34,7 +34,8 @@ int main(int argc, char** argv) {
     Atoms at(positions);
     auto [maxPos, minPos] = get_max_pos(at.positions);
     Eigen::Array3d a(3,1);
-    a << 160, 160, 144.249;
+    a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]+1);// 160, 160, 144.249;
+    std::cout << "doin big af whhisker with "<<a[2]<<" Lz length" << std::endl;
     // at.velocities.setRandom();
     // at.velocities *= .1e-6;
     const double timestep = 8; double T;
@@ -43,7 +44,7 @@ int main(int argc, char** argv) {
     double const strain_per_step = 0.000001;
     double const max_strain = 10.;
     center(at,a);
-    std::ofstream traj("traj2.xyz");
+    std::ofstream traj("traj_big_whisk.xyz");
     std::ofstream temp("temp");
     std::ofstream ener("ener");
     write_xyz(traj, at);
@@ -53,10 +54,7 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     Domain domain(MPI_COMM_WORLD,
-                  {
-                   a[0],
-                   a[1],
-                   288.499},
+                  { a[0], a[1], a[2]},
                   {1,1,12},
                   {0, 0, 1});
     domain.enable(at);
@@ -66,7 +64,7 @@ int main(int argc, char** argv) {
     std::cout << "new values1: " << domain.nb_local() << std::endl;
     ducastelle(at, nl);
 
-    for(int i = 1; i < 300001; i++) {
+    for(int i = 1; i < 50001; i++) {
         verlet_step1(at.positions, at.velocities, at.forces, timestep, fixed_mass);
         domain.exchange_atoms(at);
         domain.update_ghosts(at,10.);
@@ -76,7 +74,7 @@ int main(int argc, char** argv) {
 
         auto [maxPos, minPos] = get_max_pos(at.positions);
         Eigen::Array3d dom_length{ maxPos[0]-minPos[0],maxPos[1]-minPos[1],a[2]};
-        if(i%100==0 && i > 1) {
+        if(i%1000==0 && i > 1) {
             double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, dom_length.prod(),5.),
                                            MPI_SUM, MPI_COMM_WORLD)};
             double ekin_total{MPI::allreduce(at.get_ekin(fixed_mass,
@@ -92,7 +90,7 @@ int main(int argc, char** argv) {
                 write_xyz(traj, at);
                 temp << T << "\n";
                 ener << ekin_total+epot_tot << "\n";
-                // std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
+                std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
             }
             domain.enable(at);
             domain.update_ghosts(at,10.);
@@ -101,7 +99,7 @@ int main(int argc, char** argv) {
         }
         // std::cout << /*at.velocities.colwise() -= */at.velocities.rowwise().mean() << std::endl;
         // at.velocities.colwise() -= at.velocities.rowwise().mean();
-        berendsen_thermostat(at, domain,10, timestep, 1000, fixed_mass);
+        berendsen_thermostat(at, domain,20, timestep, 1000, fixed_mass);
         a[2] += strain_per_step * a[2];
         domain.scale(at, a);
         domain.exchange_atoms(at);
@@ -110,6 +108,7 @@ int main(int argc, char** argv) {
         ducastelle(at, nl);
     }
     MPI_Finalize();
-
+    temp.close();
+    ener.close();
     traj.close();
 }

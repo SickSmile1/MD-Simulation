@@ -14,6 +14,7 @@ test_sources = [
     '07/test_energy_conservation.cpp'
 ]
 
+
 tests = executable(
     'tests2',
     test_sources,
@@ -22,7 +23,18 @@ tests = executable(
     dependencies : [eigen,mpi,google_test],
 )
 
-test('tests', tests)
+incdir2 = include_directories('09')
+test_sources2 = [
+    '09/test_whisker_energies_temps.cpp'
+]
+tests = executable(
+    'tests3',
+    test_sources2,
+    include_directories : [incdir2,lib_incdirs],
+    link_with : [lib],
+    dependencies : [eigen,mpi,google_test],
+)
+# test('tests', tests)
 
 fs = import('fs')
 fs.copyfile('07/cluster_923.xyz')
