@@ -30,7 +30,7 @@ void center(Atoms &at, Eigen::Array3d dom_length) {
 }
 
 int main(int argc, char** argv) {
-    auto [names, positions, velocities]{read_xyz_with_velocities("whisker_large.xyz")};
+    auto [names, positions]{read_xyz("whisker_small.xyz")};
     Atoms at(positions);
     auto [maxPos, minPos] = get_max_pos(at.positions);
     Eigen::Array3d a(3,1);
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     Domain domain(MPI_COMM_WORLD,
                   { a[0], a[1], a[2]},
-                  {1,1,12},
+                  {1,1,6},
                   {0, 0, 1});
     domain.enable(at);
     domain.update_ghosts(at,10.);
@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
                 ener << ekin_total+epot_tot << "\n";
                 std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
             }
+            std::cout << "stresses sum: " <<at.stresses.sum() << std::endl;
             domain.enable(at);
             domain.update_ghosts(at,10.);
             nl.update(at,5);

@@ -5,7 +5,7 @@
 #include "Atoms.h"
 #include "domain.h"
 
-void berendsen_thermostat(Atoms &atoms, const double temperature, const double timestep,
+double berendsen_thermostat(Atoms &atoms, const double temperature, const double timestep,
                           const double relaxation_time, const double mass){
     // double ekin = 0, T = 0, lambda = 0, diff_t = 0;
     // pi = vi/mi
@@ -13,9 +13,10 @@ void berendsen_thermostat(Atoms &atoms, const double temperature, const double t
             atoms.velocities.colwise().squaredNorm()*0.5).sum() /
             (1.5 * atoms.velocities.cols() * kB) );
     atoms.velocities.array() *=  sqrt(1+(diff_t-1)*(timestep/relaxation_time)); // lambda
+    return sqrt(1+(diff_t-1)*(timestep/relaxation_time));
 }
 
-void berendsen_thermostat(Atoms &atoms, Domain &domain, const double temperature, const double timestep,
+double berendsen_thermostat(Atoms &atoms, Domain &domain, const double temperature, const double timestep,
                           const double relaxation_time, const double mass){
     // double ekin = 0, T = 0, lambda = 0, diff_t = 0;
     // pi = vi/mi
@@ -27,6 +28,7 @@ void berendsen_thermostat(Atoms &atoms, Domain &domain, const double temperature
     const double diff_t = temperature/ ( v_squared_norm /
                                          (1.5 * n_atoms * kB) );
     atoms.velocities.array() *=  sqrt(1+(diff_t-1)*(timestep/relaxation_time)); // lambda
+    return sqrt(1+(diff_t-1)*(timestep/relaxation_time));
 }
 
 void berendsen_thermostat(Atoms &atoms, const double temperature, const double timestep,

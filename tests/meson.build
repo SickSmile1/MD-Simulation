@@ -38,3 +38,4 @@ tests = executable(
 
 fs = import('fs')
 fs.copyfile('07/cluster_923.xyz')
+fs.copyfile('09/whisker_small.xyz')
