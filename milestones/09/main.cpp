@@ -30,7 +30,7 @@ void center(Atoms &at, Eigen::Array3d dom_length) {
 }
 
 int main(int argc, char** argv) {
-    auto [names, positions, velocities]{read_xyz_with_velocities("whisker_large.xyz")};
+    auto [names, positions, velocities]{read_xyz_with_velocities("whisker_small.xyz")};
     Atoms at(positions);
     auto [maxPos, minPos] = get_max_pos(at.positions);
     Eigen::Array3d a(3,1);
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
         auto [maxPos, minPos] = get_max_pos(at.positions);
         Eigen::Array3d dom_length{ maxPos[0]-minPos[0],maxPos[1]-minPos[1],a[2]};
         if(i%1000==0 && i > 1) {
-            double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, dom_length.prod(),5.),
+            double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, dom_length.prod()),
                                            MPI_SUM, MPI_COMM_WORLD)};
             double ekin_total{MPI::allreduce(at.get_ekin(fixed_mass,
                                              at.velocities,domain.nb_local()),
@@ -85,6 +85,7 @@ int main(int argc, char** argv) {
 
             domain.disable(at);
             if (rank ==0) {
+                std::cout << at.stresses << std::endl;
                 std::cout << a[2] << std::endl;
                 T = ( ekin_total / (1.5 * n_atoms * kB) );
                 write_xyz(traj, at);

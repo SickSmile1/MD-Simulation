@@ -125,6 +125,7 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, Domain &dom, 
     // Reset energies and forces. This needs to be turned off if multiple
     // potentials are present.
     atoms.forces.setZero();
+    atoms.stresses.setZero();
     // compute embedding energies
     Eigen::ArrayXd embedding(
             atoms.nb_atoms()); // contains first density, later energy
@@ -187,8 +188,8 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, Domain &dom, 
                 if(j> dom.nb_local()) half = .5;
                 else if (i> dom.nb_local() && j >  dom.nb_local()) half = 0;
 
-                atoms.stresses.col(i) += 1/2. * vol * half * pair_force * distance_vector.array();
-                atoms.stresses.col(j) += 1/2. * vol * half * pair_force * distance_vector.array();
+                atoms.stresses += 1/vol * half * pair_force.matrix() * distance_vector.matrix().transpose();
+                atoms.stresses += 1/vol * half * pair_force.matrix() * distance_vector.matrix().transpose();
                 // sum per-atom energies
                 repulsive_energy *= 0.5;
                 energies(i) += repulsive_energy;

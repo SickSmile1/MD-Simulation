@@ -11,7 +11,7 @@ using Positions_t = Eigen::Array3Xd;
 using Velocities_t = Eigen::Array3Xd;
 using Forces_t = Eigen::Array3Xd;
 using Masses = Eigen::Array3Xd;
-using Stresses = Eigen::Array3Xd;
+using Stresses = Eigen::MatrixXd;
 const double kB = 8.61733e-5;
 
 struct Atoms {
@@ -23,7 +23,7 @@ struct Atoms {
     Eigen::ArrayXd energies;
 
     Atoms(const Positions_t &p): positions{p}, velocities(3, p.cols()), forces{3, p.cols()},
-            masses{3, p.cols()}, stresses{3,p.cols()} {
+            masses{3, p.cols()}, stresses{3,3} {
         masses.setOnes();
         velocities.setZero();
         forces.setZero();
@@ -31,7 +31,7 @@ struct Atoms {
     }
 
     Atoms(const std::vector<std::basic_string<char>> names, const Positions_t &p): positions{p}, velocities(3, p.cols()),
-            forces{3, p.cols()}, masses{3, p.cols()}, stresses{3,p.cols()}{
+            forces{3, p.cols()}, masses{3, p.cols()}, stresses{3,3}{
         masses.setOnes();
         velocities.setZero();
         forces.setZero();
@@ -39,7 +39,7 @@ struct Atoms {
     }
 
     Atoms(const int t): positions{3,t}, velocities(3, t), forces{3, t},
-            masses{3, t}, stresses{3,t}{
+            masses{3, t}, stresses{3,3}{
         masses.setOnes();
         velocities.setZero();
         forces.setZero();
@@ -48,7 +48,7 @@ struct Atoms {
 
     Atoms(const Positions_t &p, const Velocities_t &v) :
             positions{p}, velocities{v}, forces{3, p.cols()},
-            masses{3, p.cols()}, stresses{3,p.cols()} {
+            masses{3, p.cols()}, stresses{3,3} {
         assert(p.cols() == v.cols());
         masses.setOnes();
         forces.setZero();
@@ -65,7 +65,6 @@ struct Atoms {
         velocities.conservativeResize(3, local);
         forces.conservativeResize(3, local);
         masses.conservativeResize(3, local);
-        stresses.conservativeResize(3, local);
     }
 
     double e_shift(Eigen::Vector3d at1, Eigen::Vector3d at2, double sigma, double epsilon) const {
