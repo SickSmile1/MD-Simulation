@@ -22,10 +22,10 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     Domain domain(MPI_COMM_WORLD,
-                  {60, 60, 60},
-                  {1, 1, 6},
-                  {0, 0, 0});
-    for (int i = 3; i < 20; i++){
+                  {30, 30, 30},
+                  {1, 1, 10},
+                  {1, 1, 1});
+    for (int i = 2; i < 21; i+=2){
         Atoms at(positions);
         const double timestep = i;
         double T;
@@ -35,12 +35,12 @@ int main(int argc, char** argv) {
         //at.velocities *= std::sqrt((3 * kB * 100) / mass);
         // center
         Eigen::Array3d center;
-        center << 30 , 30, 30;
+        // center << 30 , 30, 30;
         at.positions.block(0,0,3,at.nb_atoms()).colwise() +=
                 center -at.positions.block(0,0,3,at.nb_atoms()).rowwise().mean();
         // std::ofstream traj("traj_big_cluster.xyz");
-        // std::ofstream temp("temp");
-        // std::ofstream ener("ener");
+        std::ofstream temp("temp_"+std::to_string(i));
+        std::ofstream ener("ener_"+std::to_string(i));
         // write_xyz(traj, at);
 
         domain.enable(at);
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
         std::cout << "Domein length of Rank " << rank << " is: " << domain.nb_local() << std::endl;
         ducastelle(at, nl);
 
-        for (int i = 1; i < 1001; i++) {
+        for (int i = 1; i < 10001; i++) {
             verlet_step1(at.positions, at.velocities, at.forces, timestep, mass);
             domain.exchange_atoms(at);
             domain.update_ghosts(at, 11.);
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
             ducastelle(at, nl,11.);
             verlet_step2(at.velocities, at.forces, timestep, mass);
 
-            if (i % 50 == 0 && i > 1) {
+            if (i % 10 == 0 && i > 1) {
                 double epot_tot{MPI::allreduce(ducastelle(at, nl, domain,0,11.),
                                                MPI_SUM, MPI_COMM_WORLD)};
                 double ekin_total{MPI::allreduce(at.get_ekin(mass,
@@ -69,12 +69,12 @@ int main(int argc, char** argv) {
 
                 domain.disable(at);
                 if (rank == 0) {
-                    std::cout << "System has "<< n_atoms << " atoms." << std::endl;
+                    // std::cout << "System has "<< n_atoms << " atoms." << std::endl;
                     T = (ekin_total / (1.5 * n_atoms * kB));
                     // write_xyz(traj, at);
-                    // temp << T << "\n";
-                    // ener << ekin_total+epot_tot << "\n";
-                    std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
+                    temp << T << "\n";
+                    ener << ekin_total+epot_tot << "\n";
+                    std::cout <<  "T: " << T << " total Energy: "<< epot_tot + ekin_total << std::endl;
                 }
                 domain.enable(at);
                 domain.update_ghosts(at, 11.);
@@ -85,7 +85,8 @@ int main(int argc, char** argv) {
             // at.velocities.colwise() -= at.velocities.rowwise().mean();
             // berendsen_thermostat(at, domain,20, timestep, 1000, mass);
         }
-
+        temp.close();
+        ener.close();
         domain.disable(at);
     }
     MPI_Finalize();
