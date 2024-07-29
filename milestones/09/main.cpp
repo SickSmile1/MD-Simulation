@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     Domain domain(MPI_COMM_WORLD,
                   { a[0], a[1], a[2]},
-                  {1,1,12},
+                  {1,1,6},
                   {0, 0, 1});
     domain.enable(at);
     domain.update_ghosts(at,10.);
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 
             domain.disable(at);
             if (rank ==0) {
-                std::cout << at.stresses << std::endl;
+                std::cout << at.stresses*(1.6/10e-1) << std::endl;
                 std::cout << a[2] << std::endl;
                 T = ( ekin_total / (1.5 * n_atoms * kB) );
                 write_xyz(traj, at);

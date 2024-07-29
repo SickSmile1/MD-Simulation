@@ -1,106 +1,92 @@
 //
-// Created by ilia on 28/06/24.
+// Created by ilia on 26/07/24.
 //
+
 
 #include "vector"
 #include "berendsten.h"
 #include "verlet.h"
+#include "domain.h"
 #include "ducastelle.h"
 #include "neighbors.h"
 #include "iostream"
 #include "xyz.h"
+#include "mpi.h"
 
-double ramp_up(Atoms &at, const double timestep, double &T, const double fixed_mass,
-             NeighborList &nl, std::ofstream& traj) {
-    double epot;
-    std::ofstream myfile;
-    myfile.open ("energy");
-    std::ofstream myfile1;
-    myfile1.open ("temp");
-    for(int i = 0; i < 10000; i++) {
-        verlet_step1(at.positions, at.velocities, at.forces, timestep, fixed_mass);
-        nl.update(at,5.5);
-        // lj_direct_summation(at, nl, 1, 1, 5.5, fixed_mass);
-        at.forces.setZero();
-        epot = ducastelle(at, nl);
-        verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
-        if (i < 1000) {berendsen_thermostat(at, 650, timestep, 400, fixed_mass); }
-        if(i%10==0) {
-            write_xyz(traj, at);
-            // std::cout << "Temp is: " << T << ", energy: " << ekin+epot << std::endl;
+int main(int argc, char** argv) {
+    auto [names, positions]{read_xyz("cluster_3871.xyz")};
+
+    MPI_Init(&argc, &argv);
+    int size;
+    int rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    Domain domain(MPI_COMM_WORLD,
+                  {60, 60, 60},
+                  {1, 1, 6},
+                  {0, 0, 0});
+    for (int i = 3; i < 20; i++){
+        Atoms at(positions);
+        const double timestep = i;
+        double T;
+        const double mass = 196.96657 / 0.009649;
+        //at.velocities.setRandom();
+        //at.velocities.colwise().normalize();
+        //at.velocities *= std::sqrt((3 * kB * 100) / mass);
+        // center
+        Eigen::Array3d center;
+        center << 30 , 30, 30;
+        at.positions.block(0,0,3,at.nb_atoms()).colwise() +=
+                center -at.positions.block(0,0,3,at.nb_atoms()).rowwise().mean();
+        // std::ofstream traj("traj_big_cluster.xyz");
+        // std::ofstream temp("temp");
+        // std::ofstream ener("ener");
+        // write_xyz(traj, at);
+
+        domain.enable(at);
+        domain.update_ghosts(at, 11.);
+        NeighborList nl;
+        nl.update(at, 5.5);
+        std::cout << "Domein length of Rank " << rank << " is: " << domain.nb_local() << std::endl;
+        ducastelle(at, nl);
+
+        for (int i = 1; i < 1001; i++) {
+            verlet_step1(at.positions, at.velocities, at.forces, timestep, mass);
+            domain.exchange_atoms(at);
+            domain.update_ghosts(at, 11.);
+            nl.update(at, 5.5);
+            ducastelle(at, nl,11.);
+            verlet_step2(at.velocities, at.forces, timestep, mass);
+
+            if (i % 50 == 0 && i > 1) {
+                double epot_tot{MPI::allreduce(ducastelle(at, nl, domain,0,11.),
+                                               MPI_SUM, MPI_COMM_WORLD)};
+                double ekin_total{MPI::allreduce(at.get_ekin(mass,
+                                                             at.velocities, domain.nb_local()),
+                                                 MPI_SUM, MPI_COMM_WORLD)};
+                int n_atoms{MPI::allreduce(domain.nb_local(),
+                                           MPI_SUM, MPI_COMM_WORLD)};
+
+                domain.disable(at);
+                if (rank == 0) {
+                    std::cout << "System has "<< n_atoms << " atoms." << std::endl;
+                    T = (ekin_total / (1.5 * n_atoms * kB));
+                    // write_xyz(traj, at);
+                    // temp << T << "\n";
+                    // ener << ekin_total+epot_tot << "\n";
+                    std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
+                }
+                domain.enable(at);
+                domain.update_ghosts(at, 11.);
+                nl.update(at, 5.5);
+                domain.exchange_atoms(at);
+            }
+            // std::cout << /*at.velocities.colwise() -= */at.velocities.rowwise().mean() << std::endl;
+            // at.velocities.colwise() -= at.velocities.rowwise().mean();
+            // berendsen_thermostat(at, domain,20, timestep, 1000, mass);
         }
-        if(i%100 == 0) {
-            double ekin = fixed_mass*(at.velocities.colwise().squaredNorm()*0.5).sum();
-            T = ( ekin / (1.5 * at.positions.cols() * kB) );
-            myfile << ekin+epot << "\n";
-            myfile1 << T << "\n";
-        }
-        // if(i%100==0) {std::cout << std::to_string(i)+" steps finished." << std::endl;}
+
+        domain.disable(at);
     }
-    myfile.close();
-    myfile1.close();
-    return epot;
-}
-
-bool equi_energy(std::vector<double> ta) {
-    double res1 = std::abs(ta[ta.size()-1])-std::abs(ta[ta.size()-2]);
-    double res2 = std::abs(ta[ta.size()-2])-std::abs(ta[ta.size()-3]);
-    std::cout << "ta: " << ta[ta.size()-1] << " ta2: " << ta[ta.size()-2] << "ta3" << ta[ta.size()-3] << std::endl;
-    std::cout << "res1: " << res1 << " res2: " << res2 << std::endl;
-    if (res1 < 20. && res2 < 20.) {return 1;}
-    else { return 0;}
-}
-
-void melt(Atoms &at, const double timestep, double &T, const double fixed_mass,
-             NeighborList &nl, std::ofstream& traj, std::vector<double> ta) {
-    std::ofstream myfile;
-    myfile.open ("energy1");
-    std::ofstream myfile1;
-    myfile1.open ("temp1");
-    for(int i = 0; i < 130000; i++) {
-        verlet_step1(at.positions, at.velocities, at.forces, timestep, fixed_mass);
-        nl.update(at,5.5);
-        // lj_direct_summation(at, nl, 1, 1, 5.5, fixed_mass);
-        at.forces.setZero();
-        double epot = ducastelle(at, nl);
-        verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
-        if(i%1000==0) {
-            write_xyz(traj, at);
-            T = at.get_temp(fixed_mass,at.velocities);
-            double ekin = at.get_ekin(fixed_mass,at.velocities);
-            ta.push_back(ekin+epot);
-            if (equi_energy(ta)) at.velocities *= std::sqrt(1+(20/T));
-            if(T >= 1200.) {std::cout << i << std::endl; i = 130001;}
-            std::cout << "Temp is: " << T << ", energy: " << ekin+epot << ", velocity change: "<<
-                std::sqrt(1+(10/T)) << std::endl;
-        }
-        if(i%100==0) {
-            double ekin = at.get_ekin(fixed_mass,at.velocities);
-            myfile << ekin+epot << "\n";
-            myfile1 << T << "\n";}
-    }
-    myfile.close();
-    myfile1.close();
-}
-
-
-int main() {
-    auto [names, positions, velocities]{read_xyz_with_velocities("cluster_923.xyz")};
-    Atoms at(positions);
-    at.velocities.setRandom();
-    at.velocities *= .1e-5;
-    std::ofstream traj("traj2.xyz");
-    NeighborList nl;
-    nl.update(at,5.5);
-    const double timestep = 1; double T = 0;
-    const double fixed_mass = 196.96657 / 0.009649;
-    double epot = ramp_up(at,timestep, T, fixed_mass, nl, traj);
-    std::vector<double> temp_array;
-    double ekin = at.get_ekin(fixed_mass, at.velocities);
-    temp_array.push_back(ekin+epot);
-    temp_array.push_back(ekin+epot);
-    temp_array.push_back(ekin+epot);
-    melt(at,timestep, T, fixed_mass, nl, traj, temp_array);
-
-    traj.close();
+    MPI_Finalize();
 }
