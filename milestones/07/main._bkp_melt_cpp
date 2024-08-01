@@ -1,0 +1,111 @@
+//
+// Created by ilia on 26/07/24.
+//
+
+#include "verlet.h"
+#include "domain.h"
+#include "ducastelle.h"
+#include "neighbors.h"
+#include "iostream"
+#include "xyz.h"
+#include "mpi.h"
+
+int main(int argc, char** argv) {
+    auto [names, positions,velocities]
+            {read_xyz_with_velocities("equilibrated_600k.xyz")};
+
+    std::ofstream traj("traj_melt_big_cluster.xyz");
+    std::ofstream temp("temp_melt");
+    std::ofstream ener("ener_melt");
+    MPI_Init(&argc, &argv);
+    int size;
+    int rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    Domain domain(MPI_COMM_WORLD,
+                  {60, 60, 60},
+                  {1, 1, 5},
+                  {0, 0, 0});
+    Atoms at(positions,velocities);
+    const double timestep = 5;
+    double T;
+    const double mass = 196.96657 / 0.009649;
+    Eigen::Array3d center;
+    center << 30,30,30;
+    at.positions.block(0,0,3,at.nb_atoms()).colwise() +=
+            center -at.positions.block(0,0,3,at.nb_atoms()).rowwise().mean();
+
+    domain.enable(at);
+    domain.update_ghosts(at, 20.);
+    NeighborList nl;
+    nl.update(at, 10);
+    std::cout << "Domein length of Rank " << rank << " is: " << domain.nb_local() << std::endl;
+    ducastelle(at, nl, 10);
+
+    for (int i = 1; i < 400001; i++) {
+        verlet_step1(at.positions, at.velocities, at.forces, timestep, mass);
+        domain.exchange_atoms(at);
+        domain.update_ghosts(at, 20.);
+        nl.update(at, 10.);
+        ducastelle(at, nl, 10.);
+        verlet_step2(at.velocities, at.forces, timestep, mass);
+        if (i % 100 == 1) {
+            double epot_tot{MPI::allreduce(ducastelle(at, nl, domain, 0, 10.),
+                                           MPI_SUM, MPI_COMM_WORLD)};
+            double ekin_total{MPI::allreduce(at.get_ekin(mass,
+                                                         at.velocities, domain.nb_local()),
+                                             MPI_SUM, MPI_COMM_WORLD)};
+            int n_atoms{MPI::allreduce(domain.nb_local(),
+                                       MPI_SUM, MPI_COMM_WORLD)};
+            T = (ekin_total / (1.5 * n_atoms * kB));
+            domain.disable(at);
+            if (rank == 0) {
+                // std::cout << "System has "<< n_atoms << " atoms." << std::endl;
+                write_xyz(traj, at);
+                temp << T << "\n";
+                ener << ekin_total + epot_tot << "\n";
+                std::cout <<"i:"<<i<< " T: " << T << " total Energy: " << epot_tot + ekin_total << std::endl;
+                std::cout << std::sqrt(1 + (10 / T)) << std::endl;
+                // else { i = 3980;}
+            }
+            if (T < 1200 && (i % 500) == 1) { at.velocities *= std::sqrt(1 + (20 / T)); } else if(T>1200){ i = 400000;}
+            domain.enable(at);
+            domain.exchange_atoms(at);
+            domain.update_ghosts(at,10.);
+            nl.update(at, 5.);
+            ducastelle(at, nl);
+        }
+    }
+    domain.disable(at);
+    traj.close();
+    temp.close();
+    ener.close();
+    MPI_Finalize();
+}
+
+
+/*if (i % 500 == 0 && i > 1) {
+    double epot_tot{MPI::allreduce(ducastelle(at, nl, domain,0,10.),
+                                   MPI_SUM, MPI_COMM_WORLD)};
+    double ekin_total{MPI::allreduce(at.get_ekin(mass,
+                                                 at.velocities, domain.nb_local()),
+                                     MPI_SUM, MPI_COMM_WORLD)};
+    int n_atoms{MPI::allreduce(domain.nb_local(),
+                               MPI_SUM, MPI_COMM_WORLD)};
+
+    domain.disable(at);
+    if (rank == 0) {
+        // std::cout << "System has "<< n_atoms << " atoms." << std::endl;
+        T = (ekin_total / (1.5 * n_atoms * kB));
+        //write_xyz(traj, at);
+        // temp << T << "\n";
+        // ener << ekin_total+epot_tot << "\n";
+        std::cout <<  "T: " << T << " total Energy: "<< epot_tot + ekin_total << std::endl;
+    }
+    domain.enable(at);
+    domain.update_ghosts(at, 20.);
+    nl.update(at, 10);
+    domain.exchange_atoms(at);
+}*/
+// std::cout << /*at.velocities.colwise() -= */at.velocities.rowwise().mean() << std::endl;
+// at.velocities.colwise() -= at.velocities.rowwise().mean();
