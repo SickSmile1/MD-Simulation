@@ -7,11 +7,11 @@ import numpy as np
 import ase.io as io
 from ase.lattice.cubic import FaceCenteredCubic
 
-# radius = 15
-# size = [14, 10, 50]  # 6590 atoms
+radius = 15
+size = [14, 10, 50]  # 6590 atoms
 
-radius = 12
-size = [11, 10, 30]
+# radius = 12
+# size = [11, 10, 30]
 
 # radius = 30
 # size = [28, 20, 100]  # 51500 atoms
@@ -37,5 +37,5 @@ del a[m]
 a.center()
 a.set_pbc([False, False, True])
 
-io.write('whisker.xyz', a)
+io.write('whisker_1.xyz', a)
 io.write('whisker.data', a, format='lammps-data')

@@ -13,6 +13,7 @@ using Forces_t = Eigen::Array3Xd;
 using Masses = Eigen::Array3Xd;
 using Stresses = Eigen::MatrixXd;
 const double kB = 8.61733e-5;
+const double toGPa = 160.2176621;
 
 struct Atoms {
     Positions_t positions;
