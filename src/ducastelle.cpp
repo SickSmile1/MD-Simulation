@@ -188,8 +188,8 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list, Domain &dom, 
                 if(j> dom.nb_local()) half = .5;
                 else if (i> dom.nb_local() && j >  dom.nb_local()) half = 0;
 
-                atoms.stresses += 1/vol * half * pair_force.matrix() * distance_vector.matrix().transpose();
-                atoms.stresses += 1/vol * half * pair_force.matrix() * distance_vector.matrix().transpose();
+                atoms.stresses += 1/vol * half * pair_force.matrix() * distance_vector.matrix().transpose()*toGPa;
+                atoms.stresses += 1/vol * half * pair_force.matrix() * distance_vector.matrix().transpose()*toGPa;
                 // sum per-atom energies
                 repulsive_energy *= 0.5;
                 energies(i) += repulsive_energy;

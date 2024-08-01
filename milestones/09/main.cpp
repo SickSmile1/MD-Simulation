@@ -30,12 +30,13 @@ void center(Atoms &at, Eigen::Array3d dom_length) {
 }
 
 void stretch(std::string name, int rank, double temp) {
-    auto [names, positions, velocities]{read_xyz_with_velocities(name+".xyz")};
+    auto [names, positions]{read_xyz(name+".xyz")};
     Atoms at(positions);
+    int atom_size = at.nb_atoms();
     auto [maxPos, minPos] = get_max_pos(at.positions);
     Eigen::Array3d a(3,1);
     a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]+1);// 160, 160, 144.249;
-    std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
+    // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
     // at.velocities.setRandom();
     // at.velocities *= .1e-6;
     const double timestep = 8; double T;
@@ -44,12 +45,13 @@ void stretch(std::string name, int rank, double temp) {
     double const strain_per_step = 0.000001;
     double const max_strain = 10.;
     center(at,a);
-    std::ofstream traj(name+"/traj_big_whisk.xyz");
-    std::ofstream temps(name+"/temp");
-    std::ofstream ener(name+"/ener");
-    write_xyz(traj, at);
+    std::ofstream traj(name+"traj_"+std::to_string(temp)+".xyz");
+    std::ofstream temps(name+"temp_"+std::to_string(temp));
+    std::ofstream ener(name+"ener"+std::to_string(temp));
+    std::ofstream stress(name+"stress"+std::to_string(temp));
+    // write_xyz(traj, at);
     Domain domain(MPI_COMM_WORLD,
-                  { 10, 10, 10},
+                  { a[0], a[1], a[2]},
                   {1,1,20},
                   {0, 0, 1});
 
@@ -81,14 +83,15 @@ void stretch(std::string name, int rank, double temp) {
 
             domain.disable(at);
             if (rank ==0) {
-                std::cout << at.stresses*(1.6/10e-1) << std::endl;
-                std::cout << a[2] << std::endl;
+                // std::cout << at.stresses*(1.6/10e-1) << std::endl;
+                // std::cout << a[2] << std::endl;
                 T = ( ekin_total / (1.5 * n_atoms * kB) );
                 write_xyz(traj, at);
                 temps << T << "\n";
                 ener << ekin_total+epot_tot << "\n";
                 // std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
             }
+            if (n_atoms < atom_size) i = 1000;
             domain.enable(at);
             domain.update_ghosts(at,10.);
             nl.update(at,5);
@@ -102,9 +105,11 @@ void stretch(std::string name, int rank, double temp) {
         nl.update(at, 5.);
         ducastelle(at, nl);
     }
+    domain.disable(at);
     temps.close();
     ener.close();
     traj.close();
+    stress.close();
 }
 
 int main(int argc, char** argv) {
@@ -113,7 +118,24 @@ int main(int argc, char** argv) {
     int rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    stretch("whisker_1", rank, 20);
+    stretch("whisker_1", rank, 400);
+    stretch("whisker_1", rank, 700);
 
+
+    stretch("whisker_2", rank, 20);
+    stretch("whisker_2", rank, 400);
+    stretch("whisker_2", rank, 700);
+
+
+    stretch("whisker_large", rank, 20);
+    stretch("whisker_large", rank, 400);
+    stretch("whisker_large", rank, 700);
+
+
+    stretch("whisker_small", rank, 20);
+    stretch("whisker_small", rank, 400);
+    stretch("whisker_small", rank, 700);
 
     MPI_Finalize();
 }
