@@ -7,6 +7,6 @@
 
 #include "Atoms.h"
 
-void createCubicLatice(Atoms &at,int num);
+void createCubicLatice(Atoms &at, const int num, const double dist = 1);
 
 #endif //MD_SIMULATION_CUBICLATICE_H

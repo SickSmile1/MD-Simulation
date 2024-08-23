@@ -14,5 +14,5 @@ executable(
   'equilibrium_benchmarks.cpp',
   include_directories : [lib_incdirs],
   link_with : [lib],
-  dependencies : [eigen, benchmark]
+  dependencies : [eigen, benchmark, mpi]
 )

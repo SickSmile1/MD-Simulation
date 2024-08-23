@@ -9,3 +9,5 @@ executable(
 fs = import('fs')
 fs.copyfile('whisker_large.xyz')
 fs.copyfile('whisker_small.xyz')
+fs.copyfile('whisker_1.xyz')
+fs.copyfile('whisker_2.xyz')

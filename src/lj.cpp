@@ -11,8 +11,8 @@ double lj_direct_summation(Atoms &atoms, const double epsilon = 1.0, const doubl
     double e_pot_all = 0., e_pot = 0., r_norm = 0., pauli = 0., london = 0., force = 0.;
     Eigen::Vector3d d_vec;
     atoms.forces.setZero();
-    for(std::size_t i = 1; i < atoms.positions.cols(); i++){
-        for(std::size_t j = 0; j < i; j++) {
+    for(long i = 1; i < atoms.positions.cols(); i++){
+        for(long j = 0; j < i; j++) {
             d_vec = atoms.positions.col(i) - atoms.positions.col(j);
             r_norm = d_vec.norm();
             london = std::pow((sigma/r_norm),6);

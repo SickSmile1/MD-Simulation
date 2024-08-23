@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
         domain.update_ghosts(at,11.);
         nl.update(at,5.5);
         at.forces.setZero();
-        double epot = ducastelle(at, nl);
+        ducastelle(at, nl);
         verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
         if(i%1000==0) {
             //double ekin = at.get_ekin(fixed_mass,at.velocities);
