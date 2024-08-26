@@ -91,10 +91,10 @@ void startStopWrite(Atoms &at, NeighborList &nl, Domain &domain, double mass, st
 }
 
 void checkTimesteps(Domain domain, int rank, std::string temp, int temps) {
-  auto [names, positions]{read_xyz(temp)};
+  auto [names, positions, velocities]{read_xyz_with_velocities(temp)};
   std::cout << "checking reasonable timesteps for "+temp << std::endl;
   for (int j = 2; j < 33; j+=6){
-    Atoms at(positions);
+    Atoms at(positions, velocities);
     const double timestep = j, mass = 196.96657 / 0.009649;
     std::ofstream traj("plot/traj_big_"+std::to_string(temps)+"_"+std::to_string(j)+".xyz");
     write_xyz(traj,at);
@@ -108,7 +108,7 @@ void checkTimesteps(Domain domain, int rank, std::string temp, int temps) {
     std::cout << "Domein length of Rank " << rank << " is: " << domain.nb_local() << std::endl;
     ducastelle(at, nl, 10);
 
-    for (int i = 1; i < 5001; i++) {
+    for (int i = 0; i < 5001; i++) {
       verlet_step1(at.positions, at.velocities, at.forces, timestep, mass);
       domain.exchange_atoms(at);
       domain.update_ghosts(at, 20.);
