@@ -82,7 +82,7 @@ void startStopWrite(Atoms &at, NeighborList &nl, Domain &domain, double mass, st
     // write_xyz(traj, at);
     temp << T << "\n";
     ener << ekin_total+epot_tot << "\n";
-    std::cout <<  "T: " << T << " total Energy: "<< epot_tot + ekin_total << std::endl;
+    // std::cout <<  "T: " << T << " total Energy: "<< epot_tot + ekin_total << std::endl;
   }
   domain.enable(at);
   domain.update_ghosts(at, 20.);
@@ -93,7 +93,7 @@ void startStopWrite(Atoms &at, NeighborList &nl, Domain &domain, double mass, st
 void checkTimesteps(Domain domain, int rank, std::string temp, int temps) {
   auto [names, positions]{read_xyz(temp)};
   std::cout << "checking reasonable timesteps for "+temp << std::endl;
-  for (int j = 8; j < 48; j+=8){
+  for (int j = 2; j < 33; j+=6){
     Atoms at(positions);
     const double timestep = j, mass = 196.96657 / 0.009649;
     std::ofstream traj("plot/traj_big_"+std::to_string(temps)+"_"+std::to_string(j)+".xyz");
@@ -118,7 +118,7 @@ void checkTimesteps(Domain domain, int rank, std::string temp, int temps) {
       if (i % 100 == 0 && i > 1) {
         startStopWrite(at,nl,domain,mass,traj,ener,temp, rank);
       }
-      if(i<2000)berendsen_thermostat(at, domain, temps, timestep, 800, mass);
+      // if(i<2000)berendsen_thermostat(at, domain, temps, timestep, 800, mass);
     }
     domain.disable(at);
     if (rank == 0) {write_xyz(traj,at); }
@@ -134,12 +134,12 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   Domain domain(MPI_COMM_WORLD,
-                {46.68, 46.68, 46.68},
-                {1, 1, 5},
+                {66.68, 66.68, 66.68},
+                {3, 3, 2},
                 {1,1,1});
   createClusters(domain, rank);
   checkTimesteps(domain,rank, "equilibrated_600k.xyz", 600);
-  checkTimesteps(domain,rank, "equilibrated_1000k.xyz", 1200);
+  checkTimesteps(domain,rank, "equilibrated_1000k.xyz", 1000);
   MPI_Finalize();
 }
 
