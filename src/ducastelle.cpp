@@ -70,7 +70,6 @@ double ducastelle(Atoms &atoms, const NeighborList &neighbor_list,
     // compute forces
     for (auto [i, j] : neighbor_list) {
         if (i < j) {
-            double half = 1.;
             double d_embedding_density_i{0};
             // this is the derivative of sqrt(embedding)
             if (embedding(i) != 0)

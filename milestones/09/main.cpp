@@ -35,7 +35,8 @@ void stretch(std::string name, int rank, double temp) {
     int atom_size = at.nb_atoms();
     auto [maxPos, minPos] = get_max_pos(at.positions);
     Eigen::Array3d a(3,1);
-    a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]+1);// 160, 160, 144.249;
+    a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]-1);// 160, 160, 144.249;
+    center(at, a);
     // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
     // at.velocities.setRandom();
     // at.velocities *= .1e-6;
@@ -71,7 +72,7 @@ void stretch(std::string name, int rank, double temp) {
         ducastelle(at, nl);
         verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
 
-        auto [maxPos, minPos] = get_max_pos(at.positions);
+        auto [maxPos, minPos] = get_max_pos(at.positions); // TODO global at.pos
         Eigen::Array3d dom_length{ maxPos[0]-minPos[0],maxPos[1]-minPos[1],a[2]};
         if(i%1000==0 && i > 1) {
             double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, dom_length.prod()),
@@ -85,7 +86,7 @@ void stretch(std::string name, int rank, double temp) {
             domain.disable(at);
             if (rank ==0) {
                 // at.stresses = at.stresses*(1.6/10e-1);
-                std::cout << "stresses: "<< at.stresses << std::endl;
+                // std::cout << "stresses: "<< at.stresses << std::endl;
                 // std::cout << a[2] << std::endl;
                 T = ( ekin_total / (1.5 * n_atoms * kB) );
                 write_xyz(traj, at);
@@ -93,21 +94,22 @@ void stretch(std::string name, int rank, double temp) {
                 ener << ekin_total+epot_tot << "\n";
                 // std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
             }
-            if (n_atoms < atom_size) i = 1000;
             domain.enable(at);
             domain.update_ghosts(at,10.);
             nl.update(at,5);
             domain.exchange_atoms(at);
         }
         berendsen_thermostat(at, domain,temp, timestep, 1000, fixed_mass);
-        a[2] += strain * a[2];
         accumulated_strain += strain * a[2];
+        a[2] += strain * a[2];
         if (accumulated_strain >= max_strain) i = steps+1;
         domain.scale(at, a);
         domain.exchange_atoms(at);
         domain.update_ghosts(at,10.);
         nl.update(at, 5.);
-        ducastelle(at, nl);
+        dom_length[2] = a[2];
+        ducastelle(at, nl, domain,dom_length.prod());
+        if (rank == 0 && i%10==0) std::cout << "stresses: "<<at.stresses(2,2) << std::endl;
     }
     domain.disable(at);
     temps.close();
