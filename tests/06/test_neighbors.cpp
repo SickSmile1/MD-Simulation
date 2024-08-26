@@ -78,8 +78,8 @@ TEST(NeighborsTest, FirstAtomHasNoNeighbor) {
     EXPECT_TRUE((neighbors == Eigen::Array<int, 2, 1>{3, 2}).all());
 
     for (auto[i, j]: neighbor_list) {
-        if (i == 2) EXPECT_EQ(j, 3);
-        if (i == 3) EXPECT_EQ(j, 2);
+        if (i == 2) {EXPECT_EQ(j, 3);}
+        if (i == 3) {EXPECT_EQ(j, 2);}
     }
 }
 
@@ -107,8 +107,8 @@ TEST(NeighborsTest, LastAtomHasNoNeighbor) {
     EXPECT_TRUE((neighbors == Eigen::Array<int, 2, 1>{1, 0}).all());
 
     for (auto[i, j]: neighbor_list) {
-        if (i == 0) EXPECT_EQ(j, 1);
-        if (i == 1) EXPECT_EQ(j, 0);
+        if (i == 0) {EXPECT_EQ(j, 1);}
+        if (i == 1) {EXPECT_EQ(j, 0);}
     }
 }
 

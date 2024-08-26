@@ -105,7 +105,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
       berendsen_thermostat(at, domain,temp, timestep, temp, fixed_mass);
       if (rank == 0) {
         accumulated_strain = strain * a[2];
-        std::cout << strain*a[2] << std::endl;
+        // std::cout << strain*a[2] << std::endl;
         a[2] += strain * a[2];
       }
       // if (accumulated_strain >= max_strain) i = steps+1;
@@ -126,27 +126,26 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
 }
 
 int main(int argc, char** argv) {
-    MPI_Init(&argc, &argv);
-    int size;
-    int rank;
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    //stretch("whisker_1", rank, 20);
-    //stretch("whisker_1", rank, 200);
+  MPI_Init(&argc, &argv);
+  int size;
+  int rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  stretch("whisker_r20", rank, 20., 20.);
+  stretch("whisker_r20", rank, 20.,10.);
+
+  stretch("whisker_r25", rank, 20., 20.);
+  stretch("whisker_r25", rank, 20.,10.);
+  
+  //stretch("whisker_large", rank, 20., 20.);
+  //stretch("whisker_large", rank, 200, 20.);
 
 
-    // stretch("whisker_2", rank, 20);
-    // stretch("whisker_2", rank, 200);
+  stretch("whisker_small", rank, 20, 20.);
+  // stretch("whisker_small", rank, 200, 20.);
+  stretch("whisker_small", rank, 20, 10.);
+  // stretch("whisker_small", rank, 200, 10.);
 
-
-    //stretch("whisker_large", rank, 20);
-    //stretch("whisker_large", rank, 200);
-
-
-    stretch("whisker_small", rank, 20, 20.);
-    // stretch("whisker_small", rank, 200, 20.);
-    stretch("whisker_small", rank, 20, 200.);
-    // stretch("whisker_small", rank, 200, 200.);
-
-    MPI_Finalize();
+  MPI_Finalize();
 }

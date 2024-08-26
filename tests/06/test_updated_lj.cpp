@@ -24,7 +24,7 @@ TEST(NeighborsLJTest, stillWorks) {
     double pauli = std::pow(london,2);
     double c_energy = 4*epsilon*(pauli - london);
     // compute and store energy of the indisturbed configuration
-    double e0{lj_direct_summation(atoms, nl, epsilon, sigma, 6., 1, c_energy)};
+    lj_direct_summation(atoms, nl, epsilon, sigma, 6., 1, c_energy);
     Forces_t forces0{atoms.forces};
 
     // loop over all atoms and compute forces from a finite differences approximation

@@ -35,12 +35,12 @@ TEST(Berendsten, equilibrium) {
     at.velocities.setRandom();
     at.velocities *= 1e-5;
     const double timestep = 1e-8;
-    double T;
+    // double T;
     createCubicLatice(at,4);
     for(int i = 0; i < 1000; i++) {
         verlet_step1(at.positions, at.velocities, at.forces, timestep, 1);
         // std::cout << at.forces << std::endl;
-        double epot = lj_direct_summation(at);
+        lj_direct_summation(at);
         verlet_step2(at.velocities, at.forces, timestep);
         berendsen_thermostat(at, 0.3, timestep, 1e-7);
         // T = 1 * (at.velocities.colwise().squaredNorm()*0.5).sum()/ (1.5 * at.velocities.cols() * 1);

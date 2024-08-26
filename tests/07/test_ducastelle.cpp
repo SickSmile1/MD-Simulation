@@ -55,7 +55,7 @@ TEST(DucastelleTest, Forces) {
 
     neighbor_list.update(atoms, cutoff);
     atoms.forces.setZero();
-    double e0{ducastelle(atoms, neighbor_list, cutoff, A, xi, p, q, re)};
+    ducastelle(atoms, neighbor_list, cutoff, A, xi, p, q, re);
     Forces_t forces0{atoms.forces};
 
     // loop over all atoms and compute forces from a finite differences approximation
