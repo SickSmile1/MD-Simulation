@@ -33,51 +33,48 @@ void center(Atoms &at, Eigen::Array3d dom_length) {
 void stretch(std::string name, int rank, double temp, double max_strain) {
     auto [names, positions]{read_xyz(name+".xyz")};
     Atoms at(positions);
-    int atom_size = at.nb_atoms();
     auto [maxPos, minPos] = get_max_pos(at.positions);
     Eigen::Array3d a(3,1);
-    a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]-1);// 160, 160, 144.249;
+    a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]);// 160, 160, 144.249;
     center(at, a);
     // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
     // at.velocities.setRandom();
     // at.velocities *= .1e-6;
-    int steps = 100000;
-    const double timestep = 8; double T;
+    int steps = 50000;
+    const double timestep = 5; double T;
     const double fixed_mass = 196.96657 / 0.009649;
 
-    double strain = max_strain/steps;
+    double strain = max_strain/100000;
     double accumulated_strain = 0;
     center(at,a);
-    std::string s_temp = std::to_string(int(temp)), s_strain = std::to_string(int(max_strain));
-    std::ofstream traj(name+"traj_"+s_temp+"_"+s_strain+".xyz");
+    std::string s_temp = std::to_string(int(temp)), s_strain = std::to_string(int(max_strain*10));
+    // std::ofstream traj(name+"traj_"+s_temp+"_"+s_strain+".xyz");
     std::ofstream temps(name+"temp_"+s_temp+"_"+s_strain);
     std::ofstream ener(name+"ener_"+s_temp+"_"+s_strain);
     std::ofstream stress(name+"stress_"+s_temp+"_"+s_strain);
     // write_xyz(traj, at);
     Domain domain(MPI_COMM_WORLD,
                   { a[0], a[1], a[2]},
-                  {2,2,10},
+                  {1,1,20},
                   {0, 0, 1});
 
     domain.enable(at);
-    domain.update_ghosts(at,10.);
+    domain.update_ghosts(at,20.);
     NeighborList nl;
-    nl.update(at,5);
+    nl.update(at,10.);
     // std::cout << "rank "<<rank<<" has domain length: " << domain.nb_local() << std::endl;
     ducastelle(at, nl);
 
     for(int i = 1; i < steps; i++) {
       verlet_step1(at.positions, at.velocities, at.forces, timestep, fixed_mass);
       domain.exchange_atoms(at);
-      domain.update_ghosts(at,10.);
-      nl.update(at,5);
+      domain.update_ghosts(at,20.);
+      nl.update(at,10);
       ducastelle(at, nl);
       verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
 
-      auto [maxPos, minPos] = get_max_pos(at.positions); // TODO global at.pos
-      Eigen::Array3d dom_length{ maxPos[0]-minPos[0],maxPos[1]-minPos[1],a[2]};
       if(i%1000==0 && i > 1) {
-        double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, dom_length.prod()),
+        double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, a.prod()),
                                        MPI_SUM, MPI_COMM_WORLD)};
         double ekin_total{MPI::allreduce(at.get_ekin(fixed_mass,
                                                      at.velocities,domain.nb_local()),
@@ -87,41 +84,32 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
 
         domain.disable(at);
         if (rank ==0) {
-          // at.stresses = at.stresses*(1.6/10e-1);
-          // std::cout << "stresses: "<< at.stresses << std::endl;
-          // std::cout << a[2] << std::endl;
           T = ( ekin_total / (1.5 * n_atoms * kB) );
-          write_xyz(traj, at);
+          // write_xyz(traj, at);
           temps << T << "\n";
           ener << ekin_total+epot_tot << "\n";
           stress << at.stresses(2,2)<<"\t" << accumulated_strain << "\n";
-          // std::cout << "epot: " << epot_tot << " ekin: " << ekin_total << " T: " << T << std::endl;
         }
         domain.enable(at);
-        domain.update_ghosts(at,10.);
-        nl.update(at,5);
-        domain.exchange_atoms(at);
+        domain.update_ghosts(at,20.);
+        nl.update(at,10.);
+        // domain.exchange_atoms(at);
+        ducastelle(at, nl);        
       }
-      berendsen_thermostat(at, domain,temp, timestep, temp, fixed_mass);
-      if (rank == 0) {
-        accumulated_strain = strain * a[2];
-        // std::cout << strain*a[2] << std::endl;
-        a[2] += strain * a[2];
-      }
-      // if (accumulated_strain >= max_strain) i = steps+1;
+      berendsen_thermostat(at, domain,temp, timestep, 1000, fixed_mass);
+      accumulated_strain = strain * a[2];
+      a[2] += strain * a[2];
       domain.scale(at, a);
       domain.exchange_atoms(at);
-      domain.update_ghosts(at,10.);
-      nl.update(at, 5.);
-      dom_length[2] = a[2];
-      ducastelle(at, nl, domain,dom_length.prod());
-      // if (rank == 0 && i%10==0) std::cout << "stresses: "<<at.stresses(2,2) << std::endl;
+      domain.update_ghosts(at,20.);
+      nl.update(at, 10.);
+      ducastelle(at, nl, domain, a.prod());
     }
     domain.disable(at);
-    if (rank==0)write_xyz(traj,at);
+    // if (rank==0)write_xyz(traj,at);
     temps.close();
     ener.close();
-    traj.close();
+    // traj.close();
     stress.close();
 }
 
@@ -132,20 +120,35 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  stretch("whisker_r20", rank, 20., 20.);
-  stretch("whisker_r20", rank, 20.,10.);
+  // stretch("whisker_r20", rank, 20., 20.);
+  //stretch("whisker_r20", rank, 20.,10.);
 
-  stretch("whisker_r25", rank, 20., 20.);
-  stretch("whisker_r25", rank, 20.,10.);
+  //stretch("whisker_r25", rank, 20., 20.);
+  //stretch("whisker_r25", rank, 20.,10.);
   
   //stretch("whisker_large", rank, 20., 20.);
   //stretch("whisker_large", rank, 200, 20.);
 
+  stretch("whisker_r20", rank, 20, 2.);
+  stretch("whisker_r20", rank, 20, 1.5);
+  stretch("whisker_r20", rank, 20, 1.);
+  stretch("whisker_r20", rank, 100, 2.);
+  stretch("whisker_r20", rank, 100, 1.5);
+  stretch("whisker_r20", rank, 100, 1.);
+  
+  stretch("whisker_r25", rank, 20, 2.);
+  stretch("whisker_r25", rank, 20, 1.5);
+  stretch("whisker_r25", rank, 20, 1.);
+  stretch("whisker_r25", rank, 100, 2.);
+  stretch("whisker_r25", rank, 100, 1.5);
+  stretch("whisker_r25", rank, 100, 1.);
 
-  stretch("whisker_small", rank, 20, 20.);
-  // stretch("whisker_small", rank, 200, 20.);
-  stretch("whisker_small", rank, 20, 10.);
-  // stretch("whisker_small", rank, 200, 10.);
+  stretch("whisker_large", rank, 20, 2.);
+  stretch("whisker_large", rank, 20, 1.5);
+  stretch("whisker_large", rank, 20, 1.);
+  stretch("whisker_large", rank, 100, 2.);
+  stretch("whisker_large", rank, 100, 1.5);
+  stretch("whisker_large", rank, 100, 1.);
 
   MPI_Finalize();
 }
