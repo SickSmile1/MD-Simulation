@@ -56,7 +56,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     // write_xyz(traj, at);
     Domain domain(MPI_COMM_WORLD,
                   { a[0], a[1], a[2]},
-                  {1,1,5},
+                  {2,2,10},
                   {0, 0, 1});
 
     domain.enable(at);
