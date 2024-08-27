@@ -1,6 +1,7 @@
 //
 // Created by ilia on 11/07/24.
 //
+#include "mpi_support.h"
 #include "vector"
 #include "berendsten.h"
 #include "verlet.h"
@@ -40,7 +41,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
     // at.velocities.setRandom();
     // at.velocities *= .1e-6;
-    int steps = 50000;
+    int steps = 100000;
     const double timestep = 5; double T;
     const double fixed_mass = 196.96657 / 0.009649;
 
@@ -62,8 +63,9 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     domain.update_ghosts(at,20.);
     NeighborList nl;
     nl.update(at,10.);
-    // std::cout << "rank "<<rank<<" has domain length: " << domain.nb_local() << std::endl;
+    std::cout << "rank "<<rank<<" has domain length: " << domain.nb_local() << std::endl;
     ducastelle(at, nl);
+    int brk = 0, brk1 = 0;
 
     for(int i = 1; i < steps; i++) {
       verlet_step1(at.positions, at.velocities, at.forces, timestep, fixed_mass);
@@ -71,6 +73,13 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
       domain.update_ghosts(at,20.);
       nl.update(at,10);
       ducastelle(at, nl);
+      if (domain.nb_local()<=5){ 
+        std::cout <<"<< 0finished computation, local nb_atoms: " << domain.nb_local() << " on rank " 
+                  << rank << " >>" << std::endl;
+        brk=1;
+      }
+      brk1 = MPI::allreduce(brk,MPI_SUM,MPI_COMM_WORLD);
+      if (brk1 >= 1) i = steps;
       verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
 
       if(i%1000==0 && i > 1) {
@@ -84,6 +93,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
 
         domain.disable(at);
         if (rank ==0) {
+          std::cout << "<< steps finished: " << i << " >>"<<std::endl;
           T = ( ekin_total / (1.5 * n_atoms * kB) );
           // write_xyz(traj, at);
           temps << T << "\n";
@@ -126,8 +136,8 @@ int main(int argc, char** argv) {
   //stretch("whisker_r25", rank, 20., 20.);
   //stretch("whisker_r25", rank, 20.,10.);
   
-  //stretch("whisker_large", rank, 20., 20.);
-  //stretch("whisker_large", rank, 200, 20.);
+  //stretch("whisker_small", rank, 20., 20.);
+  //stretch("whisker_small", rank, 200, 20.);
 
   stretch("whisker_r20", rank, 20, 2.);
   stretch("whisker_r20", rank, 20, 1.5);
@@ -135,7 +145,7 @@ int main(int argc, char** argv) {
   stretch("whisker_r20", rank, 100, 2.);
   stretch("whisker_r20", rank, 100, 1.5);
   stretch("whisker_r20", rank, 100, 1.);
-  
+
   stretch("whisker_r25", rank, 20, 2.);
   stretch("whisker_r25", rank, 20, 1.5);
   stretch("whisker_r25", rank, 20, 1.);
@@ -143,12 +153,12 @@ int main(int argc, char** argv) {
   stretch("whisker_r25", rank, 100, 1.5);
   stretch("whisker_r25", rank, 100, 1.);
 
-  stretch("whisker_large", rank, 20, 2.);
-  stretch("whisker_large", rank, 20, 1.5);
-  stretch("whisker_large", rank, 20, 1.);
-  stretch("whisker_large", rank, 100, 2.);
-  stretch("whisker_large", rank, 100, 1.5);
-  stretch("whisker_large", rank, 100, 1.);
+  // stretch("whisker_small", rank, 20, 2.);
+  // stretch("whisker_small", rank, 20, 1.5);
+  // stretch("whisker_small", rank, 20, 1.);
+  // stretch("whisker_small", rank, 100, 2.);
+  // stretch("whisker_small", rank, 100, 1.5);
+  // stretch("whisker_small", rank, 100, 1.);
 
   MPI_Finalize();
 }
