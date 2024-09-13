@@ -39,13 +39,13 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]);// 160, 160, 144.249;
     center(at, a);
     // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
-    // at.velocities.setRandom();
-    // at.velocities *= .1e-6;
-    int steps = 100000;
+    at.velocities.setRandom();
+    at.velocities *= .1e-6;
+    int steps = 50000;
     const double timestep = 5; double T;
     const double fixed_mass = 196.96657 / 0.009649;
 
-    double strain = max_strain/100000;
+    double strain = max_strain/50000;
     double accumulated_strain = 0;
     center(at,a);
     std::string s_temp = std::to_string(int(temp)), s_strain = std::to_string(int(max_strain*10));
@@ -104,10 +104,10 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
         domain.update_ghosts(at,20.);
         nl.update(at,10.);
         // domain.exchange_atoms(at);
-        ducastelle(at, nl);        
+        ducastelle(at, nl);
       }
       berendsen_thermostat(at, domain,temp, timestep, 1000, fixed_mass);
-      accumulated_strain = strain * a[2];
+      accumulated_strain += strain * a[2];
       a[2] += strain * a[2];
       domain.scale(at, a);
       domain.exchange_atoms(at);
@@ -139,19 +139,19 @@ int main(int argc, char** argv) {
   //stretch("whisker_small", rank, 20., 20.);
   //stretch("whisker_small", rank, 200, 20.);
 
-  stretch("whisker_r20", rank, 20, 2.);
-  stretch("whisker_r20", rank, 20, 1.5);
-  stretch("whisker_r20", rank, 20, 1.);
-  stretch("whisker_r20", rank, 100, 2.);
-  stretch("whisker_r20", rank, 100, 1.5);
-  stretch("whisker_r20", rank, 100, 1.);
+  //stretch("whisker_r20", rank, .00001, .5);
+  //stretch("whisker_r20", rank, .00001, .3);
+  //stretch("whisker_r20", rank, .00001, .1);
+  //stretch("whisker_r20", rank, 100, .5);
+  //stretch("whisker_r20", rank, 100, .3);
+  //stretch("whisker_r20", rank, 100, .1);
 
-  stretch("whisker_r25", rank, 20, 2.);
-  stretch("whisker_r25", rank, 20, 1.5);
-  stretch("whisker_r25", rank, 20, 1.);
-  stretch("whisker_r25", rank, 100, 2.);
-  stretch("whisker_r25", rank, 100, 1.5);
-  stretch("whisker_r25", rank, 100, 1.);
+  stretch("whisker_r25", rank, .00001, .5);
+  stretch("whisker_r25", rank, .00001, .3);
+  stretch("whisker_r25", rank, .00001, .1);
+  stretch("whisker_r25", rank, 100, .5);
+  stretch("whisker_r25", rank, 100, .3);
+  stretch("whisker_r25", rank, 100, .1);
 
   // stretch("whisker_small", rank, 20, 2.);
   // stretch("whisker_small", rank, 20, 1.5);
