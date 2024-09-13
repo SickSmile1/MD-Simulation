@@ -15,6 +15,7 @@ void melt(Domain &domain, Eigen::Array3Xd positions, std::string name, int rank)
   std::ofstream temp("temp_melt"+name);
   std::ofstream traj("traj_melt"+name);
   std::ofstream ener("ener_melt"+name);
+  ener << "total energy\t" << "pot_energy\t" << "kin_energy\t" << "atoms\n";
 
   Atoms at(positions);
   const double timestep = 5;
@@ -71,12 +72,12 @@ void melt(Domain &domain, Eigen::Array3Xd positions, std::string name, int rank)
         // std::cout << "System has "<< n_atoms << " atoms." << std::endl;
         // write_xyz(traj, at);
         temp << T << "\n";
-        ener << ekin_total + epot_tot << "\n";
+        ener << ekin_total + epot_tot << "\t" << epot_tot << "\t" << ekin_total << "\t" << n_atoms <<"\n";
         std::cout <<"i:"<<i<< " T: " << T << " total Energy: " << epot_tot + ekin_total << std::endl;
         std::cout << std::sqrt(1 + (10 / T)) << std::endl;
         // else { i = 3980;}
       }
-      if (T < 1200 && (i % 500) == 1) { at.velocities *= std::sqrt(1 + (20 / T)); } else if(T>1200){ i = 400000;}
+      if (T < 1400 && (i % 500) == 1) { at.velocities *= std::sqrt(1 + (20 / T)); } else if(T>1400){ i = 400000;}
       domain.enable(at);
       domain.exchange_atoms(at);
       domain.update_ghosts(at,10.);
@@ -85,7 +86,7 @@ void melt(Domain &domain, Eigen::Array3Xd positions, std::string name, int rank)
     }
   }
   domain.disable(at);
-  //traj.close();
+  traj.close();
   temp.close();
   ener.close();
 }
@@ -98,18 +99,21 @@ int main(int argc, char** argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   Domain domain(MPI_COMM_WORLD,
                 {80, 80, 80},
-                {3, 3, 1},
+                {2, 2, 1},
                 {0, 0, 0});
 
   auto [names, positions]
           {read_xyz("cluster_1415.xyz")};
   melt(domain, positions, "1415", rank);
-  // auto [names1, positions1]
-  //         {read_xyz("cluster_2057.xyz")};
-  // melt(domain, positions1, "2057", rank);
-  // auto [names2, positions2]
-  //         {read_xyz("cluster_2869.xyz")};
-  // melt(domain, positions2, "2869", rank);
+  auto [names1, positions1]
+          {read_xyz("cluster_2057.xyz")};
+  melt(domain, positions1, "2057", rank);
+  auto [names2, positions2]
+          {read_xyz("cluster_2869.xyz")};
+  melt(domain, positions2, "2869", rank);
+  auto [names3, positions3]
+          {read_xyz("cluster_3871.xyz")};
+  melt(domain, positions3, "3871", rank);
   MPI_Finalize();
 }
 
