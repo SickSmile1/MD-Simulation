@@ -8,6 +8,9 @@ executable(
 
 fs = import('fs')
 fs.copyfile('cluster_923.xyz')
+fs.copyfile('cluster_1415.xyz')
+fs.copyfile('cluster_2057.xyz')
+fs.copyfile('cluster_2869.xyz')
 fs.copyfile('cluster_3871.xyz')
 
 subdir('plot')

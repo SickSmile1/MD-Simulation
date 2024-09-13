@@ -39,8 +39,8 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]);// 160, 160, 144.249;
     center(at, a);
     // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
-    at.velocities.setRandom();
-    at.velocities *= .1e-6;
+    // at.velocities.setRandom();
+    // at.velocities *= .1e-6;
     int steps = 50000;
     const double timestep = 5; double T;
     const double fixed_mass = 196.96657 / 0.009649;
@@ -49,14 +49,14 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     double accumulated_strain = 0;
     center(at,a);
     std::string s_temp = std::to_string(int(temp)), s_strain = std::to_string(int(max_strain*10));
-    // std::ofstream traj(name+"traj_"+s_temp+"_"+s_strain+".xyz");
-    std::ofstream temps(name+"temp_"+s_temp+"_"+s_strain);
-    std::ofstream ener(name+"ener_"+s_temp+"_"+s_strain);
+    std::ofstream traj(name+"traj_"+s_temp+"_"+s_strain+".xyz");
+    //std::ofstream temps(name+"temp_"+s_temp+"_"+s_strain);
+    //std::ofstream ener(name+"ener_"+s_temp+"_"+s_strain);
     std::ofstream stress(name+"stress_"+s_temp+"_"+s_strain);
-    // write_xyz(traj, at);
+    write_xyz(traj, at);
     Domain domain(MPI_COMM_WORLD,
                   { a[0], a[1], a[2]},
-                  {1,1,20},
+                  {1,1,10},
                   {0, 0, 1});
 
     domain.enable(at);
@@ -82,7 +82,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
       if (brk1 >= 1) i = steps;
       verlet_step2(at.velocities, at.forces, timestep, fixed_mass);
 
-      if(i%1000==0 && i > 1) {
+      if(i%250==0 && i > 1) {
         double epot_tot{MPI::allreduce(ducastelle(at,nl, domain, a.prod()),
                                        MPI_SUM, MPI_COMM_WORLD)};
         double ekin_total{MPI::allreduce(at.get_ekin(fixed_mass,
@@ -95,9 +95,9 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
         if (rank ==0) {
           std::cout << "<< steps finished: " << i << " >>"<<std::endl;
           T = ( ekin_total / (1.5 * n_atoms * kB) );
-          // write_xyz(traj, at);
-          temps << T << "\n";
-          ener << ekin_total+epot_tot << "\n";
+          write_xyz(traj, at);
+          //temps << T << "\n";
+          //ener << ekin_total+epot_tot << "\n";
           stress << at.stresses(2,2)<<"\t" << accumulated_strain << "\n";
         }
         domain.enable(at);
@@ -116,9 +116,9 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
       ducastelle(at, nl, domain, a.prod());
     }
     domain.disable(at);
-    // if (rank==0)write_xyz(traj,at);
-    temps.close();
-    ener.close();
+    if (rank==0)write_xyz(traj,at);
+    //temps.close();
+    //ener.close();
     // traj.close();
     stress.close();
 }
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
   stretch("whisker_r25", rank, 100, .3);
   stretch("whisker_r25", rank, 100, .1);
 
-  // stretch("whisker_small", rank, 20, 2.);
+  stretch("whisker_small", rank, 0.00001, .1);
   // stretch("whisker_small", rank, 20, 1.5);
   // stretch("whisker_small", rank, 20, 1.);
   // stretch("whisker_small", rank, 100, 2.);

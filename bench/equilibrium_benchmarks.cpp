@@ -43,7 +43,7 @@ static void lj_cubes_cutoff(benchmark::State& state) {
         const double timestep = 1e-3;
         createCubicLatice(at, state.range(0));
         NeighborList nl;
-        nl.update(at,1.5);
+        nl.update(at,6.5);
         state.ResumeTiming();
         for (int i = 0; i < 100; i++) {
             verlet_step1(at.positions, at.velocities, at.forces, timestep, 1);
