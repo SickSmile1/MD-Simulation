@@ -38,9 +38,6 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     Eigen::Array3d a(3,1);
     a << maxPos[0]*2, maxPos[1]*2, std::ceil(maxPos[2]);// 160, 160, 144.249;
     center(at, a);
-    // std::cout << "doin big whhisker with "<<a[2]<<" Lz length" << std::endl;
-    // at.velocities.setRandom();
-    // at.velocities *= .1e-6;
     int steps = 50000;
     const double timestep = 5; double T;
     const double fixed_mass = 196.96657 / 0.009649;
@@ -56,7 +53,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
     write_xyz(traj, at);
     Domain domain(MPI_COMM_WORLD,
                   { a[0], a[1], a[2]},
-                  {1,1,10},
+                  {1,1,20},
                   {0, 0, 1});
 
     domain.enable(at);
@@ -130,21 +127,12 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // stretch("whisker_r20", rank, 20., 20.);
-  //stretch("whisker_r20", rank, 20.,10.);
-
-  //stretch("whisker_r25", rank, 20., 20.);
-  //stretch("whisker_r25", rank, 20.,10.);
-  
-  //stretch("whisker_small", rank, 20., 20.);
-  //stretch("whisker_small", rank, 200, 20.);
-
-  //stretch("whisker_r20", rank, .00001, .5);
-  //stretch("whisker_r20", rank, .00001, .3);
-  //stretch("whisker_r20", rank, .00001, .1);
-  //stretch("whisker_r20", rank, 100, .5);
-  //stretch("whisker_r20", rank, 100, .3);
-  //stretch("whisker_r20", rank, 100, .1);
+  stretch("whisker_r20", rank, .00001, .5);
+  stretch("whisker_r20", rank, .00001, .3);
+  stretch("whisker_r20", rank, .00001, .1);
+  stretch("whisker_r20", rank, 100, .5);
+  stretch("whisker_r20", rank, 100, .3);
+  stretch("whisker_r20", rank, 100, .1);
 
   stretch("whisker_r25", rank, .00001, .5);
   stretch("whisker_r25", rank, .00001, .3);
@@ -154,11 +142,11 @@ int main(int argc, char** argv) {
   stretch("whisker_r25", rank, 100, .1);
 
   stretch("whisker_small", rank, 0.00001, .1);
-  // stretch("whisker_small", rank, 20, 1.5);
-  // stretch("whisker_small", rank, 20, 1.);
-  // stretch("whisker_small", rank, 100, 2.);
-  // stretch("whisker_small", rank, 100, 1.5);
-  // stretch("whisker_small", rank, 100, 1.);
+  stretch("whisker_small", rank, 20, 1.5);
+  stretch("whisker_small", rank, 20, 1.);
+  stretch("whisker_small", rank, 100, 2.);
+  stretch("whisker_small", rank, 100, 1.5);
+  stretch("whisker_small", rank, 100, 1.);
 
   MPI_Finalize();
 }

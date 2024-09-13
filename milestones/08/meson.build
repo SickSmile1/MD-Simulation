@@ -8,3 +8,4 @@ executable(
 
 fs = import('fs')
 fs.copyfile('cluster_923.xyz')
+fs.copyfile('cluster_3871.xyz')
