@@ -104,7 +104,7 @@ void stretch(std::string name, int rank, double temp, double max_strain) {
         domain.update_ghosts(at,20.);
         nl.update(at,10.);
         // domain.exchange_atoms(at);
-        ducastelle(at, nl);        
+        ducastelle(at, nl);
       }
       berendsen_thermostat(at, domain,temp, timestep, 1000, fixed_mass);
       accumulated_strain += strain * a[2];
@@ -139,19 +139,19 @@ int main(int argc, char** argv) {
   //stretch("whisker_small", rank, 20., 20.);
   //stretch("whisker_small", rank, 200, 20.);
 
-  /*stretch("whisker_r20", rank, 20, 2.);
-  stretch("whisker_r20", rank, 20, 1.5);
-  stretch("whisker_r20", rank, 20, 1.);
-  stretch("whisker_r20", rank, 100, 2.);
-  stretch("whisker_r20", rank, 100, 1.5);
-  stretch("whisker_r20", rank, 100, 1.);
+  //stretch("whisker_r20", rank, .00001, .5);
+  //stretch("whisker_r20", rank, .00001, .3);
+  //stretch("whisker_r20", rank, .00001, .1);
+  //stretch("whisker_r20", rank, 100, .5);
+  //stretch("whisker_r20", rank, 100, .3);
+  //stretch("whisker_r20", rank, 100, .1);
 
-  stretch("whisker_r25", rank, 20, 2.);
-  stretch("whisker_r25", rank, 20, 1.5);
-  stretch("whisker_r25", rank, 20, 1.);
-  stretch("whisker_r25", rank, 100, 2.);
-  stretch("whisker_r25", rank, 100, 1.5);
-  stretch("whisker_r25", rank, 100, 1.);*/
+  stretch("whisker_r25", rank, .00001, .5);
+  stretch("whisker_r25", rank, .00001, .3);
+  stretch("whisker_r25", rank, .00001, .1);
+  stretch("whisker_r25", rank, 100, .5);
+  stretch("whisker_r25", rank, 100, .3);
+  stretch("whisker_r25", rank, 100, .1);
 
   stretch("whisker_small", rank, 0.00001, .1);
   // stretch("whisker_small", rank, 20, 1.5);
