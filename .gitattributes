@@ -1,2 +1,5 @@
 *.ipynb linguist-documentation=true
 *.[1-9] linguist-documentation=true
+
+# Exclude vendor/third-party C++ libraries or header-only libs from stats
+subprojects/* linguist-vendored
